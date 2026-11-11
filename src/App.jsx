@@ -1,0 +1,103 @@
+import { useState } from 'react'
+import { BookOpen, Layers, House, Settings, Menu, X } from 'lucide-react'
+import Sidebar from './components/Sidebar'
+import EmptyState from './components/EmptyState'
+import ProjectsPage from './components/ProjectsPage'
+import ProjectWorkspace from './components/ProjectWorkspace'
+import ProjectModal from './components/ProjectModal'
+import TaskModal from './components/TaskModal'
+import ConfirmModal from './components/ConfirmModal'
+import useProjects from './hooks/useProjects'
+import { createProject, updateProject, removeProject, addTask, editTask, moveTask, removeTask } from './data/projects'
+import './App.css'
+import './projects.css'
+
+const pages = {
+  dashboard: { label: 'Dashboard', icon: House },
+  projects: { label: 'Projects', icon: Layers, description: 'Your projects will live here. A little space for your next big idea.' },
+  documentation: { label: 'Documentation', icon: BookOpen, description: 'Your knowledge, thoughtfully organized. Documentation is coming soon.' },
+  settings: { label: 'Settings', icon: Settings, description: 'Make this space your own. Workspace settings are coming soon.' },
+}
+
+export default function App() {
+  const [activePage, setActivePage] = useState('dashboard')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [selectedProjectId, setSelectedProjectId] = useState(null)
+  const [modal, setModal] = useState(null)
+  const { projects, error, commit, readOnly } = useProjects()
+  const selectedProject = projects.find(project => project.id === selectedProjectId)
+  const page = pages[activePage]
+
+  function navigate(id) {
+    setActivePage(id)
+    setSelectedProjectId(null)
+    setModal(null)
+    setMenuOpen(false)
+  }
+
+  function openProject(id) {
+    setActivePage('projects')
+    setSelectedProjectId(id)
+    setModal(null)
+    setMenuOpen(false)
+  }
+
+  function saveProject(values) {
+    const changes = modal.project
+      ? list => updateProject(list, modal.project.id, values)
+      : list => [...list, createProject(values)]
+    if (commit(changes)) setModal(null)
+  }
+
+  function saveTask(values) {
+    if (commit(list => modal.task
+      ? editTask(list, selectedProject.id, modal.task.id, values)
+      : addTask(list, selectedProject.id, values))) setModal(null)
+  }
+
+  function deleteItem() {
+    const deletingProject = modal.type === 'deleteProject'
+    const success = commit(list => deletingProject
+      ? removeProject(list, modal.project.id)
+      : removeTask(list, selectedProject.id, modal.task.id))
+    if (success) {
+      if (deletingProject && selectedProjectId === modal.project.id) setSelectedProjectId(null)
+      setModal(null)
+    }
+  }
+
+  return (
+    <div className="app-layout">
+      <a className="skip-link" href="#main-content">Skip to content</a>
+      <Sidebar pages={pages} activePage={activePage} onNavigate={navigate} menuOpen={menuOpen} projects={projects} selectedProjectId={selectedProjectId} onOpenProject={openProject} />
+      <div className="workspace">
+        <header className="workspace-header">
+          <button className="menu-toggle" type="button" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-expanded={menuOpen} aria-controls="sidebar" onClick={() => setMenuOpen(!menuOpen)}>
+            {menuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+          <span className="page-label">{selectedProject?.name ?? page.label}</span>
+          <span className="workspace-label"><span /> Personal workspace</span>
+        </header>
+        <main id="main-content" className={`main-content${activePage === 'projects' ? ' content-projects' : ''}`} tabIndex={-1}>
+          {error && <p className="storage-error" role="alert">{error}</p>}
+          {activePage !== 'projects' ? <EmptyState key={activePage} page={activePage} {...page} /> : selectedProject ?
+            <ProjectWorkspace project={selectedProject} readOnly={readOnly} onBack={() => navigate('projects')}
+              onEditProject={() => setModal({ type: 'project', project: selectedProject })}
+              onDeleteProject={() => setModal({ type: 'deleteProject', project: selectedProject })}
+              onCreate={() => setModal({ type: 'task' })}
+              onEdit={task => setModal({ type: 'task', task })}
+              onDelete={task => setModal({ type: 'deleteTask', task })}
+              onMove={(id, status) => commit(list => moveTask(list, selectedProject.id, id, status))} /> :
+            <ProjectsPage projects={projects} readOnly={readOnly} onOpen={openProject}
+              onCreate={() => setModal({ type: 'project' })}
+              onEdit={project => setModal({ type: 'project', project })}
+              onDelete={project => setModal({ type: 'deleteProject', project })} />}
+        </main>
+      </div>
+      {modal?.type === 'project' && <ProjectModal project={modal.project} error={error} onSave={saveProject} onClose={() => setModal(null)} />}
+      {modal?.type === 'task' && <TaskModal task={modal.task} error={error} onSave={saveTask} onClose={() => setModal(null)} />}
+      {modal?.type === 'deleteProject' && <ConfirmModal title="Delete project?" error={error} message={`Delete “${modal.project.name}” and all of its tasks? This cannot be undone.`} onConfirm={deleteItem} onClose={() => setModal(null)} />}
+      {modal?.type === 'deleteTask' && <ConfirmModal title="Delete task?" error={error} message={`Delete “${modal.task.title}”? This cannot be undone.`} onConfirm={deleteItem} onClose={() => setModal(null)} />}
+    </div>
+  )
+}
