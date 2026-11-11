@@ -4,12 +4,13 @@ import { ArrowLeft, Check, Copy, Loader2, Trash2, AlertCircle } from 'lucide-rea
 import EditorToolbar from './EditorToolbar'
 import ProjectNoteSelector from './ProjectNoteSelector'
 import { editorExtensions } from './editorExtensions'
+import LinkedTasks from './LinkedTasks'
 
 function timestamp(value) {
   return new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 }
 
-export default function NoteEditor({ note, projects, store, status, readOnly, onBack, onDuplicate, onDelete }) {
+export default function NoteEditor({ note, projects, store, status, readOnly, onBack, onDuplicate, onDelete, linkedTasks = [], onOpenTask }) {
   const [contentError, setContentError] = useState('')
   const invalid = useRef(false)
   const editor = useEditor({
@@ -28,6 +29,7 @@ export default function NoteEditor({ note, projects, store, status, readOnly, on
     <div className="note-title-area"><input className="note-title" aria-label="Note title" value={note.title} maxLength={200} placeholder="Untitled note" disabled={readOnly} onChange={event => store.update(note.id, { title: event.target.value })} onBlur={() => store.flush()} />
       <ProjectNoteSelector projects={projects} value={note.projectId} disabled={readOnly} onChange={projectId => { store.update(note.id, { projectId }); store.flush() }} />
       <div className="note-timestamps"><span>Created <time dateTime={note.createdAt}>{timestamp(note.createdAt)}</time></span><span>Edited <time dateTime={note.updatedAt}>{timestamp(note.updatedAt)}</time></span></div>
+      <LinkedTasks tasks={linkedTasks} onOpenTask={onOpenTask} />
     </div>
     {contentError && <p className="storage-error" role="alert">{contentError}</p>}
     <EditorToolbar editor={editor} disabled={readOnly || Boolean(contentError)} />

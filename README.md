@@ -24,6 +24,24 @@ Add tasks to **To Do**, edit their title and description, and move them between
 button. The move button also works with a keyboard or on touch devices. Task
 deletion requires confirmation.
 
+Click a task card to open **Task details**. Title, description, status, and plain
+text **Implementation Notes** save automatically on each valid edit. Details
+include the project and task timestamps. If saving fails, the draft remains open;
+retry before closing or following a documentation link. An empty title also blocks
+leaving the details so it cannot silently discard other draft fields.
+
+Use **Link Note** to search and select multiple notes. The picker starts with the
+current project's notes and can include other projects or unassigned notes.
+Already linked notes cannot be linked again. **Create Note** reuses the existing
+note creation dialog, assigns the task's project, links it, and opens the editor.
+If note creation succeeds but saving its task link fails, retrying links the same
+note instead of creating another. Closing that recovery dialog leaves the created
+note in Documentation, where it can be linked later.
+
+Linked-note cards open their note in Documentation. The editor's collapsed
+**Linked Tasks** section shows backlinks with project and status; clicking a
+backlink returns to that project's board with the correct task details open.
+
 ## Documentation and notes
 
 Open **Documentation** for a searchable notes list and a Tiptap rich-text editor.
@@ -46,6 +64,20 @@ the editor full-screen; **All notes** returns to the list.
 `src/data/projects.js` contains reusable data operations and the localStorage
 adapter. `src/hooks/useProjects.js` coordinates state, saving, and storage errors.
 Projects contain their own tasks; IDs use `crypto.randomUUID()`.
+
+Tasks now also store `linkedNoteIds`, `implementationNotes`, `createdAt`, and
+`updatedAt`. Legacy tasks receive safe defaults on load and are persisted in the
+existing project key on the next write. Unknown legacy creation times display as
+**Not recorded (older task)** rather than an invented date. Note content remains
+only in note records. Task deletion and unlinking never delete documentation;
+references to deleted notes are safely ignored. Backlinks are derived from task
+IDs, so there is no second relationship list to keep synchronized.
+
+`src/data/taskDocumentation.js` contains relationship queries and create/link
+coordination. `src/hooks/useTaskDraft.js` retains failed/invalid task drafts while
+`src/hooks/useProjects.js` saves against the latest committed project snapshot,
+including multiple changes made during one UI event. Both storage keys remain
+unchanged.
 
 Changes are saved to `no-te.projects.v1` before being committed to the UI. A failed
 save displays an error and keeps forms open for retry. Unreadable saved data is
@@ -89,6 +121,14 @@ checkboxes, undo/redo, links, project scopes, and remount persistence. jsdom is 
 development-only dependency. Its dialog and layout adapters do not verify native
 browser focus traps, responsive appearance, or mobile viewport behavior.
 
+Task/documentation tests cover legacy defaults, relationship deduplication,
+unlinking, missing references, timestamps, multiline implementation notes, and
+idempotent partial-failure recovery. A second React integration test covers task
+details, native drag event handlers, many-to-many linking, task-to-note-to-task
+navigation, save-failure retention/retry, creation from tasks, application remount,
+and deletion safety. Native pointer dragging and dialog stacking still need a
+real-browser check.
+
 Browser verification checklist:
 
 - Create two projects, edit a name/description, and open each from its card and sidebar.
@@ -102,6 +142,11 @@ Browser verification checklist:
 - Edit and immediately switch notes, navigate away, or refresh; verify the latest draft persists.
 - Delete a project and verify its notes remain under Unassigned, with content intact.
 - On tablet check the collapsible sidebar; on mobile open a note and return with All notes.
+- Open task details, link several notes, and verify already linked notes are disabled in the picker.
+- Edit Implementation Notes and follow a linked note; expand Linked Tasks and return to the original task.
+- Create a note from task details and verify its project, link, and editor selection.
+- Refresh and verify task details; delete a linked note, then reopen its tasks without broken cards.
+- On mobile check task detail scrolling, nested note dialogs, and the full-screen note editor.
 
 Automated browser verification was unavailable in the implementation session:
 the available Windows browser was blocked by the computer-use URL policy tooling.

@@ -6,13 +6,16 @@ import ProjectsPage from './components/ProjectsPage'
 import ProjectWorkspace from './components/ProjectWorkspace'
 import ProjectModal from './components/ProjectModal'
 import TaskModal from './components/TaskModal'
+import TaskDetails from './components/TaskDetails'
 import ConfirmModal from './components/ConfirmModal'
 import useProjects from './hooks/useProjects'
 import useNotes from './hooks/useNotes'
-import { createProject, updateProject, removeProject, addTask, editTask, moveTask, removeTask } from './data/projects'
+import { createProject, updateProject, removeProject, addTask, editTask, moveTask, removeTask, updateTaskDetails } from './data/projects'
+import { createLinkedTaskNote } from './data/taskDocumentation'
 import './App.css'
 import './projects.css'
 import './documentation.css'
+import './task-details.css'
 
 const DocumentationWorkspace = lazy(() => import('./components/documentation/DocumentationWorkspace'))
 function DocumentationView(props) {
@@ -32,10 +35,13 @@ export default function App() {
   const [selectedProjectId, setSelectedProjectId] = useState(null)
   const [modal, setModal] = useState(null)
   const [projectTab, setProjectTab] = useState('board')
+  const [noteRequest, setNoteRequest] = useState(null)
   const { projects, error, commit, readOnly } = useProjects()
   const notesState = useNotes()
   const notesStore = notesState.store
   const selectedProject = projects.find(project => project.id === selectedProjectId)
+  const detailProject = modal?.type === 'taskDetails' ? projects.find(project => project.id === modal.projectId) : null
+  const detailTask = detailProject?.tasks.find(task => task.id === modal.taskId)
   const page = pages[activePage]
 
   useEffect(() => {
@@ -47,7 +53,28 @@ export default function App() {
     setActivePage(id)
     setSelectedProjectId(null)
     setModal(null)
+    setNoteRequest(null)
     setMenuOpen(false)
+  }
+
+  function openNote(noteId) {
+    if (!notesStore.flush() || !notesStore.getSnapshot().notes.some(note => note.id === noteId)) return false
+    setActivePage('documentation')
+    setSelectedProjectId(null)
+    setModal(null)
+    setMenuOpen(false)
+    setNoteRequest({ id: noteId, requestId: crypto.randomUUID() })
+    return true
+  }
+
+  function openTask(projectId, taskId) {
+    if (!notesStore.flush() || !projects.some(project => project.id === projectId && project.tasks.some(task => task.id === taskId))) return false
+    setActivePage('projects')
+    setSelectedProjectId(projectId)
+    setProjectTab('board')
+    setModal({ type: 'taskDetails', projectId, taskId })
+    setMenuOpen(false)
+    return true
   }
 
   function openProject(id) {
@@ -99,14 +126,14 @@ export default function App() {
         <main id="main-content" className={`main-content${activePage === 'projects' ? ' content-projects' : ''}${activePage === 'documentation' ? ' content-documentation' : ''}`} tabIndex={-1}>
           {error && <p className="storage-error" role="alert">{error}</p>}
           {notesState.error && activePage !== 'documentation' && <p className="storage-error" role="alert">{notesState.error}</p>}
-          {activePage === 'documentation' ? <DocumentationView notesState={notesState} projects={projects} /> : activePage !== 'projects' ? <EmptyState key={activePage} page={activePage} {...page} /> : selectedProject ?
+          {activePage === 'documentation' ? <DocumentationView key={noteRequest?.requestId || 'all-notes'} initialNoteId={noteRequest?.id} notesState={notesState} projects={projects} onOpenTask={openTask} /> : activePage !== 'projects' ? <EmptyState key={activePage} page={activePage} {...page} /> : selectedProject ?
             <ProjectWorkspace project={selectedProject} readOnly={readOnly} onBack={() => navigate('projects')}
               activeTab={projectTab} onTabChange={tab => { if (notesStore.flush()) setProjectTab(tab) }}
-              documentation={<DocumentationView key={selectedProject.id} notesState={notesState} projects={projects} projectScope={selectedProject.id} />}
+              documentation={<DocumentationView key={selectedProject.id} notesState={notesState} projects={projects} projectScope={selectedProject.id} onOpenTask={openTask} />}
               onEditProject={() => setModal({ type: 'project', project: selectedProject })}
               onDeleteProject={() => setModal({ type: 'deleteProject', project: selectedProject })}
               onCreate={() => setModal({ type: 'task' })}
-              onEdit={task => setModal({ type: 'task', task })}
+              onEdit={task => openTask(selectedProject.id, task.id)}
               onDelete={task => setModal({ type: 'deleteTask', task })}
               onMove={(id, status) => commit(list => moveTask(list, selectedProject.id, id, status))} /> :
             <ProjectsPage projects={projects} readOnly={readOnly} onOpen={openProject}
@@ -117,6 +144,11 @@ export default function App() {
       </div>
       {modal?.type === 'project' && <ProjectModal project={modal.project} error={error} onSave={saveProject} onClose={() => setModal(null)} />}
       {modal?.type === 'task' && <TaskModal task={modal.task} error={error} onSave={saveTask} onClose={() => setModal(null)} />}
+      {detailTask && <TaskDetails key={`${detailProject.id}:${detailTask.id}`} task={detailTask} project={detailProject} projects={projects}
+        notes={notesState.notes} notesReadOnly={notesState.readOnly} readOnly={readOnly} error={error} notesError={notesState.error}
+        onSave={values => commit(list => updateTaskDetails(list, detailProject.id, detailTask.id, values))}
+        onClose={() => setModal(null)} onOpenNote={openNote}
+        onCreateNote={(values, existingNoteId) => createLinkedTaskNote({ notesStore, commitProjects: commit, projectId: detailProject.id, taskId: detailTask.id, values, existingNoteId })} />}
       {modal?.type === 'deleteProject' && <ConfirmModal title="Delete project?" error={error || notesState.error} message={`Delete “${modal.project.name}” and all of its tasks? Its documentation notes will be preserved and become unassigned. Project and task deletion cannot be undone.`} onConfirm={deleteItem} onClose={() => setModal(null)} />}
       {modal?.type === 'deleteTask' && <ConfirmModal title="Delete task?" error={error} message={`Delete “${modal.task.title}”? This cannot be undone.`} onConfirm={deleteItem} onClose={() => setModal(null)} />}
     </div>

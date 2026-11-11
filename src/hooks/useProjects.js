@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { loadProjects, saveProjects } from '../data/projects'
 
 export default function useProjects() {
@@ -7,13 +7,15 @@ export default function useProjects() {
     catch { return { projects: [], error: 'Saved projects could not be loaded. Your saved data has been kept. Check browser storage access and reload before making changes.' } }
   })
   const [projects, setProjects] = useState(initial.projects)
+  const currentProjects = useRef(initial.projects)
   const [error, setError] = useState(initial.error)
 
   function commit(transform) {
     if (initial.error) return false
-    const next = transform(projects)
+    const next = transform(currentProjects.current)
     try {
       saveProjects(next)
+      currentProjects.current = next
       setProjects(next)
       setError('')
       return true

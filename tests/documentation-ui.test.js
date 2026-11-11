@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { JSDOM } from 'jsdom'
 import { createServer } from 'vite'
 import { closeHistory } from '@tiptap/pm/history'
-import { STORAGE_KEY, createProject } from '../src/data/projects.js'
+import { STORAGE_KEY, createProject, normalizeTask } from '../src/data/projects.js'
 import { NOTES_STORAGE_KEY, noteText } from '../src/data/notes.js'
 
 test('documentation UI integrates CRUD, editor toolbar, checklists, navigation saves, and project preservation', async () => {
@@ -23,7 +23,7 @@ test('documentation UI integrates CRUD, editor toolbar, checklists, navigation s
   dom.window.Range.prototype.getBoundingClientRect = () => ({ top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0 })
   const { act } = await import('react')
   const { createRoot } = await import('react-dom/client')
-  const server = await createServer({ server: { middlewareMode: true, watch: null }, appType: 'custom', logLevel: 'error', optimizeDeps: { noDiscovery: true } })
+  const server = await createServer({ cacheDir: 'node_modules/.vite/test-documentation-ui', server: { middlewareMode: true, watch: null, hmr: false, ws: false }, appType: 'custom', logLevel: 'error', optimizeDeps: { noDiscovery: true } })
   let root
   try {
     const { default: App } = await server.ssrLoadModule('/src/App.jsx')
@@ -140,7 +140,7 @@ test('documentation UI integrates CRUD, editor toolbar, checklists, navigation s
     assert.match(document.querySelector('dialog').textContent, /preserved and become unassigned/)
     await click(byText('Delete'))
     assert.equal(JSON.parse(localStorage.getItem(STORAGE_KEY)).length, 1)
-    assert.deepEqual(JSON.parse(localStorage.getItem(STORAGE_KEY))[0], untouched)
+    assert.deepEqual(JSON.parse(localStorage.getItem(STORAGE_KEY))[0], { ...untouched, tasks: untouched.tasks.map(normalizeTask) })
     assert.equal(savedNotes().length, 3)
     assert.equal(savedNotes().every(note => note.projectId === null), true)
 
