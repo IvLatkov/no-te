@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { BookOpen, Layers, House, Settings, Menu, X } from 'lucide-react'
+import { BookOpen, Layers, House, Settings, Menu, X, Search } from 'lucide-react'
 import Sidebar from './components/Sidebar'
 import EmptyState from './components/EmptyState'
 import ProjectsPage from './components/ProjectsPage'
@@ -12,10 +12,16 @@ import useProjects from './hooks/useProjects'
 import useNotes from './hooks/useNotes'
 import { createProject, updateProject, removeProject, addTask, editTask, moveTask, removeTask, updateTaskDetails } from './data/projects'
 import { createLinkedTaskNote } from './data/taskDocumentation'
+import useOrganization from './hooks/useOrganization'
+import { saveFolder, folderDeletion, moveNotesOutOfFolders, saveTag, removeTagFromProjects, removeTagFromNotes } from './data/organization'
+import { canOpenSearch } from './data/search'
+import GlobalSearch from './components/GlobalSearch'
+import TagManager from './components/TagManager'
 import './App.css'
 import './projects.css'
 import './documentation.css'
 import './task-details.css'
+import './organization.css'
 
 const DocumentationWorkspace = lazy(() => import('./components/documentation/DocumentationWorkspace'))
 function DocumentationView(props) {
@@ -36,6 +42,10 @@ export default function App() {
   const [modal, setModal] = useState(null)
   const [projectTab, setProjectTab] = useState('board')
   const [noteRequest, setNoteRequest] = useState(null)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [tagManagerOpen, setTagManagerOpen] = useState(false)
+  const [organizationError, setOrganizationError] = useState('')
+  const org = useOrganization()
   const { projects, error, commit, readOnly } = useProjects()
   const notesState = useNotes()
   const notesStore = notesState.store
@@ -48,6 +58,46 @@ export default function App() {
     if (!readOnly) notesStore.reconcileProjects(projects.map(project => project.id))
   }, [projects, readOnly, notesStore])
 
+  useEffect(() => {
+    if (readOnly || org.readOnly) return
+    const ids = new Set(projects.map(project => project.id))
+    if (org.folders.some(folder => folder.projectId && !ids.has(folder.projectId))) {
+      org.commit(data => ({ ...data, folders: data.folders.map(folder => folder.projectId && !ids.has(folder.projectId) ? { ...folder, projectId: null } : folder) }))
+    }
+  }, [projects, readOnly, org.folders, org.readOnly])
+
+  useEffect(() => {
+    const shortcut = event => { if (canOpenSearch(event, document)) { event.preventDefault(); setSearchOpen(true) } }
+    document.addEventListener('keydown', shortcut)
+    return () => document.removeEventListener('keydown', shortcut)
+  }, [])
+
+  function deleteFolder(id) {
+    if (notesState.readOnly || org.readOnly) { setOrganizationError('Notes and folders must be readable before deleting a folder.'); return false }
+    if (!notesStore.flush()) return false
+    try {
+      const deletion = folderDeletion(org.folders, id)
+      if (!notesStore.transform(notes => moveNotesOutOfFolders(notes, deletion))) return false
+      return org.commit(data => ({ ...data, folders: deletion.folders }))
+    } catch (failure) { setOrganizationError(failure.message); return false }
+  }
+
+  function deleteTag(id) {
+    if (readOnly || notesState.readOnly || org.readOnly) { setOrganizationError('Projects, notes, and tags must be readable before deleting a tag.'); return false }
+    if (!notesStore.flush() || !commit(list => removeTagFromProjects(list, id))) return false
+    if (!notesStore.transform(notes => removeTagFromNotes(notes, id))) return false
+    return org.commit(data => ({ ...data, tags: data.tags.filter(tag => tag.id !== id) }))
+  }
+
+  const organization = {
+    ...org,
+    onSearch: () => setSearchOpen(true),
+    error: org.error || organizationError,
+    onManageTags: () => { setOrganizationError(''); setTagManagerOpen(true) },
+    onSaveFolder: (values, id) => { setOrganizationError(''); return org.commit(data => ({ ...data, folders: saveFolder(data.folders, values, id) })) },
+    onDeleteFolder: id => { setOrganizationError(''); return deleteFolder(id) },
+  }
+
   function navigate(id) {
     if (!notesStore.flush()) return
     setActivePage(id)
@@ -55,6 +105,7 @@ export default function App() {
     setModal(null)
     setNoteRequest(null)
     setMenuOpen(false)
+    return true
   }
 
   function openNote(noteId) {
@@ -84,6 +135,7 @@ export default function App() {
     setProjectTab('board')
     setModal(null)
     setMenuOpen(false)
+    return true
   }
 
   function saveProject(values) {
@@ -121,15 +173,18 @@ export default function App() {
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <span className="page-label">{selectedProject?.name ?? page.label}</span>
+          <div className="header-search"><Search size={16} aria-hidden="true" /><input type="search" readOnly aria-label="Open global search" placeholder="Search…" onClick={() => setSearchOpen(true)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSearchOpen(true) } }} /><kbd>{typeof navigator !== 'undefined' && /Mac/i.test(navigator.platform) ? '⌘' : 'Ctrl'} K</kbd></div>
           <span className="workspace-label"><span /> Personal workspace</span>
         </header>
         <main id="main-content" className={`main-content${activePage === 'projects' ? ' content-projects' : ''}${activePage === 'documentation' ? ' content-documentation' : ''}`} tabIndex={-1}>
           {error && <p className="storage-error" role="alert">{error}</p>}
+          {org.error && activePage !== 'documentation' && <p className="storage-error" role="alert">{org.error}</p>}
           {notesState.error && activePage !== 'documentation' && <p className="storage-error" role="alert">{notesState.error}</p>}
-          {activePage === 'documentation' ? <DocumentationView key={noteRequest?.requestId || 'all-notes'} initialNoteId={noteRequest?.id} notesState={notesState} projects={projects} onOpenTask={openTask} /> : activePage !== 'projects' ? <EmptyState key={activePage} page={activePage} {...page} /> : selectedProject ?
+          {activePage === 'documentation' ? <DocumentationView key={noteRequest?.requestId || 'all-notes'} initialNoteId={noteRequest?.id} notesState={notesState} projects={projects} onOpenTask={openTask} organization={organization} /> : activePage !== 'projects' ? <EmptyState key={activePage} page={activePage} {...page} /> : selectedProject ?
             <ProjectWorkspace project={selectedProject} readOnly={readOnly} onBack={() => navigate('projects')}
               activeTab={projectTab} onTabChange={tab => { if (notesStore.flush()) setProjectTab(tab) }}
-              documentation={<DocumentationView key={selectedProject.id} notesState={notesState} projects={projects} projectScope={selectedProject.id} onOpenTask={openTask} />}
+              organization={organization}
+              documentation={<DocumentationView key={selectedProject.id} notesState={notesState} projects={projects} projectScope={selectedProject.id} onOpenTask={openTask} organization={organization} />}
               onEditProject={() => setModal({ type: 'project', project: selectedProject })}
               onDeleteProject={() => setModal({ type: 'deleteProject', project: selectedProject })}
               onCreate={() => setModal({ type: 'task' })}
@@ -146,11 +201,14 @@ export default function App() {
       {modal?.type === 'task' && <TaskModal task={modal.task} error={error} onSave={saveTask} onClose={() => setModal(null)} />}
       {detailTask && <TaskDetails key={`${detailProject.id}:${detailTask.id}`} task={detailTask} project={detailProject} projects={projects}
         notes={notesState.notes} notesReadOnly={notesState.readOnly} readOnly={readOnly} error={error} notesError={notesState.error}
-        onSave={values => commit(list => updateTaskDetails(list, detailProject.id, detailTask.id, values))}
+        organization={organization}
+        onSave={values => commit(list => updateTaskDetails(list, detailProject.id, detailTask.id, { ...values, tagIds: org.readOnly ? values.tagIds : (values.tagIds || []).filter(id => org.tags.some(tag => tag.id === id)) }))}
         onClose={() => setModal(null)} onOpenNote={openNote}
         onCreateNote={(values, existingNoteId) => createLinkedTaskNote({ notesStore, commitProjects: commit, projectId: detailProject.id, taskId: detailTask.id, values, existingNoteId })} />}
       {modal?.type === 'deleteProject' && <ConfirmModal title="Delete project?" error={error || notesState.error} message={`Delete “${modal.project.name}” and all of its tasks? Its documentation notes will be preserved and become unassigned. Project and task deletion cannot be undone.`} onConfirm={deleteItem} onClose={() => setModal(null)} />}
       {modal?.type === 'deleteTask' && <ConfirmModal title="Delete task?" error={error} message={`Delete “${modal.task.title}”? This cannot be undone.`} onConfirm={deleteItem} onClose={() => setModal(null)} />}
+      {searchOpen && <GlobalSearch projects={projects} notes={notesState.notes} tags={org.tags} onClose={() => setSearchOpen(false)} onNavigate={result => result.type === 'Projects' ? openProject(result.id) : result.type === 'Tasks' ? openTask(result.projectId, result.id) : openNote(result.id)} />}
+      {tagManagerOpen && <TagManager tags={org.tags} readOnly={org.readOnly} error={organization.error || error || notesState.error} onClose={() => setTagManagerOpen(false)} onSave={(values, id) => { setOrganizationError(''); return org.commit(data => ({ ...data, tags: saveTag(data.tags, values, id) })) }} onDelete={id => { setOrganizationError(''); return deleteTag(id) }} />}
     </div>
   )
 }

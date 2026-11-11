@@ -124,8 +124,9 @@ test('task details autosave and support note linking, creation, navigation, back
       originalSetItem.call(this, key, value)
     }
     await click(byText('Create Note', details()))
-    assert.equal([...document.querySelectorAll('dialog select')].at(-1).value, a.id)
-    assert.equal([...document.querySelectorAll('dialog select')].at(-1).disabled, true)
+    const noteProjectSelect = [...document.querySelectorAll('dialog')].at(-1).querySelector('.note-project-selector select')
+    assert.equal(noteProjectSelect.value, a.id)
+    assert.equal(noteProjectSelect.disabled, true)
     await input(document.getElementById('new-note-title'), 'Implementation guide')
     await submit()
     assert.equal(notes().length, 5)

@@ -1,16 +1,17 @@
 import { useState } from 'react'
-import { Check, Plus, FileText, ArrowUpRight, X } from 'lucide-react'
+import { Check, Plus, FileText, ArrowUpRight, X, Search } from 'lucide-react'
 import Modal from './Modal'
 import NoteLinkPicker from './NoteLinkPicker'
 import NoteModal from './documentation/NoteModal'
 import useTaskDraft from '../hooks/useTaskDraft'
 import { linkedNotesForTask } from '../data/taskDocumentation'
+import TagSelector from './TagSelector'
 
 function timestamp(value) {
   return value ? new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'Not recorded (older task)'
 }
 
-export default function TaskDetails({ task, project, projects, notes, readOnly, notesReadOnly, error, notesError, onSave, onClose, onOpenNote, onCreateNote }) {
+export default function TaskDetails({ task, project, projects, notes, readOnly, notesReadOnly, error, notesError, onSave, onClose, onOpenNote, onCreateNote, organization }) {
   const { draft, change, save, error: draftError } = useTaskDraft(task, onSave, readOnly)
   const [linking, setLinking] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -31,9 +32,10 @@ export default function TaskDetails({ task, project, projects, notes, readOnly, 
   }
   return <>
     <Modal title="Task details" className="task-details-modal" error={formError} onClose={() => { if (save()) onClose() }}>
-      <div className="task-details-meta"><span>{project.name}</span><span className="task-autosave"><Check size={12} />{formError ? 'Changes need attention' : 'Saved automatically'}</span></div>
+      <div className="task-details-meta"><span>{project.name}</span><button type="button" className="icon-button" aria-label="Search No-Te" title="Search No-Te" onClick={() => { if (save()) organization.onSearch() }}><Search size={16} /></button><span className="task-autosave"><Check size={12} />{formError ? 'Changes need attention' : 'Saved automatically'}</span></div>
       <label htmlFor="task-detail-title">Task title</label><input id="task-detail-title" value={draft.title} autoFocus maxLength={200} required disabled={readOnly} onChange={event => change({ title: event.target.value })} />
       <div className="task-status-field"><label htmlFor="task-detail-status">Status</label><select id="task-detail-status" value={draft.status} disabled={readOnly} onChange={event => change({ status: event.target.value })}><option value="todo">To Do</option><option value="done">Done</option></select></div>
+      <TagSelector tags={organization.tags} value={draft.tagIds} onChange={tagIds => change({ tagIds })} onManage={organization.onManageTags} disabled={readOnly || organization.readOnly} />
       <label htmlFor="task-detail-description">Description <span>(optional)</span></label><textarea id="task-detail-description" rows={3} maxLength={4000} value={draft.description} disabled={readOnly} onChange={event => change({ description: event.target.value })} placeholder="What needs to be done?" />
       <section className="task-documentation" aria-labelledby="task-documentation-title"><div className="task-section-heading"><h3 id="task-documentation-title">Linked documentation</h3><div className="task-section-actions"><button type="button" className="text-action" disabled={readOnly || notesReadOnly} onClick={() => { if (save()) setLinking(true) }}><Plus size={14} /> Link Note</button><button type="button" className="text-action" disabled={readOnly || notesReadOnly} onClick={() => { if (save()) setCreating(true) }}><Plus size={14} /> Create Note</button></div></div>
         {notesError && <p className="storage-error" role="alert">{notesError}</p>}

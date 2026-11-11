@@ -59,6 +59,47 @@ On desktop the workspace uses the existing navigation, a notes list, and the
 editor. The navigation collapses on tablets. On mobile, selecting a note opens
 the editor full-screen; **All notes** returns to the list.
 
+## Search and organization
+
+Click the header search field or press **Ctrl+K** (Windows/Linux) or **Cmd+K**
+(macOS). Search groups projects, tasks, and documentation, including task
+implementation notes, rich-text note content, and assigned tag names. Use the
+arrow keys and Enter to open a result; Escape closes search and restores focus.
+Results highlight plain text without rendering HTML. Search is local, debounced
+by 150 ms, and uses a memoized index; it does not modify stored content.
+
+The shortcut leaves text inputs, Tiptap editing, and other dialogs alone. Explicit
+search buttons are available inside task details and the full-screen note editor;
+task details save their draft before opening search. Result navigation flushes
+pending note edits, preserving the existing navigation and save-error behavior.
+
+The Documentation folder tree supports creation, renaming, expansion/collapse,
+and up to three levels. Select a folder to filter its direct notes; select
+**Unfiled** for notes without folders. The selected folder's actions create a
+subfolder, rename it, or delete its subtree after confirmation. All notes from a
+deleted subtree move to its nearest surviving parent (or Unfiled at the top level)
+without changing content or project ownership.
+
+Subfolders inherit their parent's project. General folders can hold notes from
+any project; project-specific folders accept only notes of that project. The note
+editor's folder selector moves notes. Changing a note's project while it remains
+in an incompatible folder is rejected with an explanation: move it to Unfiled or
+a general folder first. Deleted projects leave their folders general and their
+notes unassigned. Folder expansion state is local to the current workspace view.
+
+Expand **Tags** inside task details or the note editor to assign multiple tags or
+open **Manage tags**. Tags can be created, renamed, recolored from a small palette,
+and deleted with reference cleanup. Removing a tag assignment leaves the reusable
+tag intact. Task cards show at most two badges, followed by a remaining-count
+indicator. Tag filters require every selected tag and combine with other filters.
+
+Boards support task-title search, tag filters, and board-order/alphabetical/
+creation-date/update-date sorting. Views do not reorder stored tasks or change
+statuses; drag-and-drop and move buttons still move filtered tasks between To Do
+and Done. Newest dates come first, with unknown legacy dates last. Documentation
+combines project, direct folder/Unfiled, tag, and text filters with title or
+recently-modified sorting. Clear-filter actions recover an empty view.
+
 ## Data
 
 `src/data/projects.js` contains reusable data operations and the localStorage
@@ -78,6 +119,25 @@ coordination. `src/hooks/useTaskDraft.js` retains failed/invalid task drafts whi
 `src/hooks/useProjects.js` saves against the latest committed project snapshot,
 including multiple changes made during one UI event. Both storage keys remain
 unchanged.
+
+Iteration 5 adds `no-te.organization.v1` with a versioned `{ version, folders,
+tags }` envelope. Folders store UUIDs, names, nullable parent/project IDs, and
+timestamps; tags store UUIDs, names, and palette colors. Tasks and notes store
+`tagIds`, while notes also store nullable `folderId`. Older records receive empty
+tag lists and an Unfiled default in memory, without rewriting storage on read.
+Existing IDs, rich-text JSON, and storage keys remain intact.
+
+`src/data/organization.js` contains validation, folder/tag operations, cleanup,
+and filter functions. `src/hooks/useOrganization.js` saves validated organization
+changes before publishing them. `src/data/search.js` creates a read-only index.
+Malformed organization data is preserved with editing disabled and an error.
+
+Folder deletion saves relocated notes before deleting folder records. Tag deletion
+cleans project/task and note references before removing the tag. These operations
+span localStorage keys and are not atomic: on a write failure, a retained folder
+may already have relocated notes, or a retained tag may already be removed from
+some items. The operation stays retryable and never deletes item content. Quota
+errors retain forms or drafts; no reset or replacement dataset is written.
 
 Changes are saved to `no-te.projects.v1` before being committed to the UI. A failed
 save displays an error and keeps forms open for retry. Unreadable saved data is
@@ -109,6 +169,13 @@ Clearing browser storage removes saved projects. Navigation returns to Dashboard
 after refresh; open Projects or use the sidebar to return to a saved board.
 
 ## Verification
+
+Iteration 5 adds model tests for safe defaults, folder CRUD/depth/cycles/project
+compatibility, subtree deletion, tags and reference cleanup, combined filters,
+search coverage, and malformed storage. React/jsdom tests cover palette keyboard
+navigation and focus, search-result navigation, HTML escaping, folder/tag controls,
+filtered drag event handling, remount persistence, and quota-error retries. They
+preserve previous iterations' regression coverage.
 
 `npm test` covers project/task creation, editing, deletion, moving in both
 directions, unique IDs, project isolation, persistence round trips, and invalid or

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { JSDOM } from 'jsdom'
 import { createServer } from 'vite'
 
-export async function uiHarness() {
+export async function uiHarness(cacheName = 'test-task-documentation-ui') {
   const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', { url: 'http://localhost/', pretendToBeVisual: true })
   for (const name of ['window', 'document', 'navigator', 'HTMLElement', 'HTMLInputElement', 'HTMLTextAreaElement', 'HTMLDialogElement', 'Element', 'Node', 'Text', 'DocumentFragment', 'MutationObserver', 'DOMParser', 'Event', 'MouseEvent', 'KeyboardEvent', 'localStorage', 'getComputedStyle']) {
     Object.defineProperty(globalThis, name, { configurable: true, value: name === 'getComputedStyle' ? dom.window[name].bind(dom.window) : dom.window[name] })
@@ -19,7 +19,7 @@ export async function uiHarness() {
   const React = await import('react')
   const { createRoot } = await import('react-dom/client')
   const { act } = React
-  const server = await createServer({ cacheDir: 'node_modules/.vite/test-task-documentation-ui', server: { middlewareMode: true, watch: null, hmr: false, ws: false }, appType: 'custom', logLevel: 'error', optimizeDeps: { noDiscovery: true } })
+  const server = await createServer({ cacheDir: `node_modules/.vite/${cacheName}`, server: { middlewareMode: true, watch: null, hmr: false, ws: false }, appType: 'custom', logLevel: 'error', optimizeDeps: { noDiscovery: true } })
   const { default: App } = await server.ssrLoadModule('/src/App.jsx')
   let root
   return {

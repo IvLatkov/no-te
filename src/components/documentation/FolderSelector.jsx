@@ -1,0 +1,3 @@
+export default function FolderSelector({ folders, projectId, value, onChange, disabled = false }) {
+  return <label className="note-project-selector">Folder<select aria-label="Note folder" value={value || ''} disabled={disabled} onChange={event => onChange(event.target.value || null)}><option value="">Unfiled</option>{value && !folders.some(folder => folder.id === value) && <option value={value}>Unavailable folder</option>}{folders.filter(folder => folder.projectId === null || folder.projectId === projectId).map(folder => <option value={folder.id} key={folder.id}>{folder.name}</option>)}</select></label>
+}

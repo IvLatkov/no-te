@@ -34,7 +34,7 @@ export function createNotesStore({ storage, delay = 500, schedule = setTimeout, 
   }
   function update(id, changes) {
     if (snapshot.readOnly || !snapshot.notes.some(note => note.id === id)) return false
-    const allowed = Object.fromEntries(Object.entries(changes).filter(([key]) => ['title', 'content', 'projectId'].includes(key)))
+    const allowed = Object.fromEntries(Object.entries(changes).filter(([key]) => ['title', 'content', 'projectId', 'folderId', 'tagIds'].includes(key)))
     const notes = snapshot.notes.map(note => note.id === id ? { ...note, ...allowed, updatedAt: new Date().toISOString() } : note)
     dirty = true
     clearTimer()
@@ -48,6 +48,7 @@ export function createNotesStore({ storage, delay = 500, schedule = setTimeout, 
     subscribe: listener => { listeners.add(listener); return () => listeners.delete(listener) },
     update,
     flush,
+    transform: transform => persist(transform(snapshot.notes)),
     create(values) {
       const note = createNote(values)
       return persist([...snapshot.notes, note]) ? note : null

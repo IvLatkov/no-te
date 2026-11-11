@@ -3,12 +3,15 @@ import { X } from 'lucide-react'
 
 export default function Modal({ title, onClose, children, error, className = '' }) {
   const dialog = useRef(null)
+  // Capture before children's autoFocus runs during the commit phase.
+  const previousFocus = useRef(typeof document === 'undefined' ? null : document.activeElement)
   const titleId = useId()
   useEffect(() => {
     const element = dialog.current
-    const previousFocus = document.activeElement
     element.showModal()
-    return () => { element.close(); previousFocus?.focus() }
+    const initialFocus = element.querySelector('[data-autofocus], [autofocus]') || element.querySelector('input:not([type="checkbox"]):not([type="radio"]):not([disabled]), textarea:not([disabled]), select:not([disabled])')
+    initialFocus?.focus()
+    return () => { element.close(); if (previousFocus.current?.isConnected) previousFocus.current.focus({ preventScroll: true }) }
   }, [])
 
   return (

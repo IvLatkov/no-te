@@ -1,3 +1,4 @@
+import { normalizeIds } from './organization.js'
 export const STORAGE_KEY = 'no-te.projects.v1'
 
 function validDate(value) { return typeof value === 'string' && Number.isFinite(Date.parse(value)) }
@@ -5,6 +6,7 @@ function validDate(value) { return typeof value === 'string' && Number.isFinite(
 export function normalizeTask(task) {
   return {
     ...task,
+    tagIds: normalizeIds(task.tagIds),
     linkedNoteIds: [...new Set(Array.isArray(task.linkedNoteIds) ? task.linkedNoteIds.filter(id => typeof id === 'string') : [])],
     implementationNotes: typeof task.implementationNotes === 'string' ? task.implementationNotes : '',
     // Older tasks have no known creation time; do not invent one on each load.
@@ -40,7 +42,7 @@ export function createProject({ name, description = '' }) {
 
 export function createTask({ title, description = '' }) {
   const timestamp = new Date().toISOString()
-  return { id: crypto.randomUUID(), title: title.trim(), description: description.trim(), status: 'todo', linkedNoteIds: [], implementationNotes: '', createdAt: timestamp, updatedAt: timestamp }
+  return { id: crypto.randomUUID(), title: title.trim(), description: description.trim(), status: 'todo', linkedNoteIds: [], tagIds: [], implementationNotes: '', createdAt: timestamp, updatedAt: timestamp }
 }
 
 export function updateProject(projects, id, changes) {
@@ -72,6 +74,7 @@ export function updateTaskDetails(projects, projectId, taskId, changes) {
     if (typeof changes.implementationNotes === 'string') patch.implementationNotes = changes.implementationNotes
     if (['todo', 'done'].includes(changes.status)) patch.status = changes.status
     if (Array.isArray(changes.linkedNoteIds)) patch.linkedNoteIds = [...new Set(changes.linkedNoteIds.filter(id => typeof id === 'string'))]
+    if (Array.isArray(changes.tagIds)) patch.tagIds = normalizeIds(changes.tagIds)
     return { ...normalizeTask(task), ...patch, updatedAt: new Date().toISOString() }
   }))
 }
