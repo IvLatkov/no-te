@@ -102,6 +102,88 @@ recently-modified sorting. Clear-filter actions recover an empty view.
 
 ## Data
 
+### JSON Backup & Restore
+
+**Settings → Data Management** exports a local JSON file and imports one only
+after validation, a count/date/version preview, and a separate replacement
+confirmation. Selecting a file, discarding its preview, or cancelling confirmation
+does not change workspace data. No upload, authentication, or backend is involved.
+Filenames use UTC: `no-te-backup-YYYY-MM-DD-HH-mm.json`.
+
+The current envelope is:
+
+```json
+{
+  "format": "no-te-backup",
+  "backupVersion": 1,
+  "schemaVersion": 1,
+  "exportedAt": "2026-11-12T12:34:00.000Z",
+  "data": {
+    "projects": [],
+    "notes": [],
+    "organization": { "version": 1, "folders": [], "tags": [] }
+  }
+}
+```
+
+Tasks stay nested under projects. Notes retain their complete Tiptap JSON, IDs,
+timestamps, project/folder/tag associations, and task links. JSON-safe unknown
+fields inside supported records and organization data are preserved. Export reads
+only the three supported user-data keys; it does not mutate live state or include
+UI state, caches, recovery records, or unrelated browser keys. Known credential
+metadata fields (such as `apiKey`, `accessToken`, and `password`) are excluded and
+disclosed as warnings. User-authored note/task free text is preserved in full;
+the export is not a secret scanner or an encrypted archive.
+
+Format **1** supports data schemas **0 and 1**. Schema 0 is an explicit legacy
+compatibility profile with optional flat `folders`/`tags`; import migrates it into
+the organization envelope in memory. Older records receive missing additive
+fields without changing IDs or inventing task creation timestamps. Future format,
+data-schema, or organization versions are rejected. Unsupported root collections
+are rejected rather than silently dropped.
+
+`src/data/backupValidation.js` checks types, collection/task ID uniqueness, valid
+timestamps, statuses, palette colors, tag/project/folder references, folder depth
+and cycles, and folder/project compatibility. Rich-text content is checked using
+safe JSON traversal and the actual Tiptap/ProseMirror schema, with unsafe links and
+unsupported formatting rejected; imported HTML is never rendered. Existing
+inactive links to deleted notes are deliberately retained with a preview warning,
+matching Iteration 4's relationship semantics. Dangerous object keys and excessive
+nesting/complexity are rejected. Import defaults to **10 MB**, configured by
+`MAX_BACKUP_BYTES`; the parser/file-reader also accepts a `maxBytes` option.
+
+`src/data/backup.js` coordinates a synchronous, journaled replacement through the
+existing persistence adapters:
+
+1. Validate/migrate in memory, then flush and retire the current notes store.
+2. Capture exact original values (including missing or unreadable old records) in
+   `no-te.restore-recovery.v1`, write it, and verify its read-back.
+3. Advance `no-te.data-revision.v1` to fence stale writers, stage the incoming
+   snapshot in `no-te.restore-preflight.v1` to check storage capacity, verify it,
+   and remove the temporary stage.
+4. Write the existing three user-data keys, read them back byte-for-byte, run the
+   real application readers, and validate restored relationships again.
+5. Clear the recovery journal, then recreate all React data hooks and UI state.
+   Browser reload is not used as the stale-write protection mechanism.
+
+Failure attempts rollback of every original key and reports whether the original
+values were verified. Failure before live writes leaves the existing dataset
+unreplaced. If rollback or cleanup cannot complete, the journal remains and
+Settings pauses editing, export, and further replacement until **Recover previous
+data** is explicitly confirmed. Invalid/unreadable recovery records are preserved
+and require storage access or manual record repair; the app never clears them
+automatically. Recovery snapshots and import staging are temporary local safety
+records, not permanent saved backup files.
+
+localStorage has no multi-key transaction. Recovery/preflight need additional
+free space, and persistent storage errors can prevent rollback; a retained journal
+allows retry after the problem is fixed. Close other No-Te tabs before restoring.
+Revision checks and storage events stop stale autosaves in updated tabs, but do
+not provide general concurrent-edit conflict resolution or make external browser
+storage edits atomic. These safeguards cannot survive clearing all browser data.
+
+### Workspace storage
+
 `src/data/projects.js` contains reusable data operations and the localStorage
 adapter. `src/hooks/useProjects.js` coordinates state, saving, and storage errors.
 Projects contain their own tasks; IDs use `crypto.randomUUID()`.
@@ -164,11 +246,21 @@ fails after a project deletion, the notes remain present, appear unassigned in
 memory, and reconciliation retries after refresh. Notes are never cascade-deleted.
 
 Data belongs to the current browser profile and origin. There is no account sync,
-multi-tab conflict handling, backend, or recovery after confirmed deletion.
+ordinary multi-tab conflict resolution, backend, or per-item undo after confirmed
+deletion. A prior backup can restore the full workspace, including deleted items.
 Clearing browser storage removes saved projects. Navigation returns to Dashboard
 after refresh; open Projects or use the sidebar to return to a saved board.
 
 ## Verification
+
+Backup tests cover collection/metadata/unknown-field preservation, filenames,
+credential exclusions, pure preview, schema migration, strict JSON/content and
+relationship validation, file limits, quota failures, partial writes, verification
+failures, recovery creation/cleanup, rollback/recovery, and stale debounced or
+cross-tab writers. React/jsdom tests exercise file selection, local Blob download,
+preview/cancellation, confirmed replacement, fresh hooks, recovery UI, restored
+editing/navigation/search/relationships, and cross-tab revision handling. Native
+file/save dialogs and real-browser visual appearance still require manual checks.
 
 Iteration 5 adds model tests for safe defaults, folder CRUD/depth/cycles/project
 compatibility, subtree deletion, tags and reference cleanup, combined filters,

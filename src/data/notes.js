@@ -1,4 +1,5 @@
 import { normalizeIds } from './organization.js'
+import { assertStorageWritable } from './storageSafety.js'
 export const NOTES_STORAGE_KEY = 'no-te.notes.v1'
 export const EMPTY_DOCUMENT = { type: 'doc', content: [{ type: 'paragraph' }] }
 
@@ -22,7 +23,8 @@ export function loadNotes(storage = localStorage) {
   return notes.map(note => ({ ...note, folderId: typeof note.folderId === 'string' ? note.folderId : null, tagIds: normalizeIds(note.tagIds) }))
 }
 
-export function saveNotes(notes, storage = localStorage) {
+export function saveNotes(notes, storage = localStorage, expectedRevision) {
+  assertStorageWritable(storage, expectedRevision)
   storage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes))
 }
 

@@ -1,3 +1,4 @@
+import { assertStorageWritable } from './storageSafety.js'
 export const ORGANIZATION_KEY = 'no-te.organization.v1'
 export const TAG_COLORS = [
   { name: 'Purple', value: '#B994FF' }, { name: 'Blue', value: '#7DBAE8' },
@@ -43,7 +44,7 @@ export function loadOrganization(storage = localStorage) {
   return data
 }
 
-export function saveOrganization(data, storage = localStorage) { storage.setItem(ORGANIZATION_KEY, JSON.stringify(data)) }
+export function saveOrganization(data, storage = localStorage, expectedRevision) { assertStorageWritable(storage, expectedRevision); storage.setItem(ORGANIZATION_KEY, JSON.stringify(data)) }
 
 export function saveFolder(folders, values, id = null) {
   const name = values.name.trim()

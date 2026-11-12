@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react'
 import { loadOrganization, saveOrganization } from '../data/organization'
+import { readDataRevision } from '../data/storageSafety'
 
 export default function useOrganization() {
   const [initial] = useState(() => {
-    try { return { data: loadOrganization(), error: '' } }
+    try { return { data: loadOrganization(), revision: readDataRevision(), error: '' } }
     catch { return { data: { version: 1, folders: [], tags: [] }, error: 'Folders and tags could not be loaded. Saved data has been preserved. Check browser storage and reload.' } }
   })
   const [data, setData] = useState(initial.data)
@@ -13,7 +14,7 @@ export default function useOrganization() {
     if (initial.error) return false
     try {
       const next = transform(latest.current)
-      saveOrganization(next)
+      saveOrganization(next, undefined, initial.revision)
       latest.current = next
       setData(next)
       setError('')

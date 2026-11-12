@@ -1,10 +1,13 @@
 import { createNote, duplicateNote, loadNotes, saveNotes, unassignMissingProjects } from './notes.js'
+import { readDataRevision } from './storageSafety.js'
 
 // The only timer writes the current snapshot, never a captured note or array.
 // Generation checks also invalidate callbacks which were already queued.
 export function createNotesStore({ storage, delay = 500, schedule = setTimeout, cancel = clearTimeout } = {}) {
   let snapshot
-  try { snapshot = { notes: loadNotes(storage), status: 'saved', error: '', readOnly: false } }
+  let revision
+  let retired = false
+  try { snapshot = { notes: loadNotes(storage), status: 'saved', error: '', readOnly: false }; revision = readDataRevision(storage) }
   catch { snapshot = { notes: [], status: 'error', error: 'Notes could not be loaded. Saved data has been preserved. Check browser storage and reload to try again.', readOnly: true } }
   let timer
   let generation = 0
@@ -16,10 +19,10 @@ export function createNotesStore({ storage, delay = 500, schedule = setTimeout, 
   }
   function clearTimer() { cancel(timer); timer = undefined; generation += 1 }
   function persist(notes) {
-    if (snapshot.readOnly) return false
+    if (snapshot.readOnly || retired) return false
     clearTimer()
     try {
-      saveNotes(notes, storage)
+      saveNotes(notes, storage, revision)
       dirty = false
       publish({ notes, status: 'saved', error: '' })
       return true
@@ -30,10 +33,11 @@ export function createNotesStore({ storage, delay = 500, schedule = setTimeout, 
   }
   function flush() {
     clearTimer()
+    if (retired) return true
     return !dirty || persist(snapshot.notes)
   }
   function update(id, changes) {
-    if (snapshot.readOnly || !snapshot.notes.some(note => note.id === id)) return false
+    if (snapshot.readOnly || retired || !snapshot.notes.some(note => note.id === id)) return false
     const allowed = Object.fromEntries(Object.entries(changes).filter(([key]) => ['title', 'content', 'projectId', 'folderId', 'tagIds'].includes(key)))
     const notes = snapshot.notes.map(note => note.id === id ? { ...note, ...allowed, updatedAt: new Date().toISOString() } : note)
     dirty = true
@@ -48,6 +52,7 @@ export function createNotesStore({ storage, delay = 500, schedule = setTimeout, 
     subscribe: listener => { listeners.add(listener); return () => listeners.delete(listener) },
     update,
     flush,
+    retire() { clearTimer(); retired = true },
     transform: transform => persist(transform(snapshot.notes)),
     create(values) {
       const note = createNote(values)
@@ -61,7 +66,7 @@ export function createNotesStore({ storage, delay = 500, schedule = setTimeout, 
     },
     remove(id) { return persist(snapshot.notes.filter(note => note.id !== id)) },
     reconcileProjects(ids) {
-      if (snapshot.readOnly) return false
+      if (snapshot.readOnly || retired) return false
       const notes = unassignMissingProjects(snapshot.notes, ids)
       if (notes.every((note, index) => note === snapshot.notes[index])) return true
       // Keep the safe association in memory even if the storage write fails.

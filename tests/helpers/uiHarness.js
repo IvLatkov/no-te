@@ -4,7 +4,7 @@ import { createServer } from 'vite'
 
 export async function uiHarness(cacheName = 'test-task-documentation-ui') {
   const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', { url: 'http://localhost/', pretendToBeVisual: true })
-  for (const name of ['window', 'document', 'navigator', 'HTMLElement', 'HTMLInputElement', 'HTMLTextAreaElement', 'HTMLDialogElement', 'Element', 'Node', 'Text', 'DocumentFragment', 'MutationObserver', 'DOMParser', 'Event', 'MouseEvent', 'KeyboardEvent', 'localStorage', 'getComputedStyle']) {
+  for (const name of ['window', 'document', 'navigator', 'HTMLElement', 'HTMLInputElement', 'HTMLTextAreaElement', 'HTMLDialogElement', 'Element', 'Node', 'Text', 'DocumentFragment', 'MutationObserver', 'DOMParser', 'Event', 'MouseEvent', 'KeyboardEvent', 'FileReader', 'localStorage', 'getComputedStyle']) {
     Object.defineProperty(globalThis, name, { configurable: true, value: name === 'getComputedStyle' ? dom.window[name].bind(dom.window) : dom.window[name] })
   }
   globalThis.requestAnimationFrame = callback => setTimeout(callback, 0)

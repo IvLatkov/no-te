@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react'
 import { loadProjects, saveProjects } from '../data/projects'
+import { readDataRevision } from '../data/storageSafety'
 
 export default function useProjects() {
   const [initial] = useState(() => {
-    try { return { projects: loadProjects(), error: '' } }
+    try { return { projects: loadProjects(), revision: readDataRevision(), error: '' } }
     catch { return { projects: [], error: 'Saved projects could not be loaded. Your saved data has been kept. Check browser storage access and reload before making changes.' } }
   })
   const [projects, setProjects] = useState(initial.projects)
@@ -14,7 +15,7 @@ export default function useProjects() {
     if (initial.error) return false
     const next = transform(currentProjects.current)
     try {
-      saveProjects(next)
+      saveProjects(next, undefined, initial.revision)
       currentProjects.current = next
       setProjects(next)
       setError('')

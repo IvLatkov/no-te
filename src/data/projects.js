@@ -1,4 +1,5 @@
 import { normalizeIds } from './organization.js'
+import { assertStorageWritable } from './storageSafety.js'
 export const STORAGE_KEY = 'no-te.projects.v1'
 
 function validDate(value) { return typeof value === 'string' && Number.isFinite(Date.parse(value)) }
@@ -32,7 +33,8 @@ export function loadProjects(storage = localStorage) {
   return projects.map(project => ({ ...project, tasks: project.tasks.map(normalizeTask) }))
 }
 
-export function saveProjects(projects, storage = localStorage) {
+export function saveProjects(projects, storage = localStorage, expectedRevision) {
+  assertStorageWritable(storage, expectedRevision)
   storage.setItem(STORAGE_KEY, JSON.stringify(projects))
 }
 

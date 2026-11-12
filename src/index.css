@@ -1,19 +1,86 @@
 :root {
-  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #eeedf3;
-  background: #121318;
+  /* Shared surfaces */
+  --background: #121318;
+  --surface-base: #17181f;
+  --surface-raised: #20212a;
+  --surface-subtle: #1a1822;
+  --surface-dialog: #1b1c24;
+  --surface-input: #13141b;
+  --overlay-subtle: #ffffff06;
+  --shadow-color: #0008;
+  /* Shared text */
+  --text-primary: #eeedf3;
+  --text-secondary: #ded9e8;
+  --text-muted: #9b9ba9;
+  --muted: var(--text-muted);
+  --text-description: #a89db6;
+  --text-on-solid: white;
+  /* Shared boundaries */
+  --border: #292a34;
+  --border-input: #34313e;
+  --border-control: #30303b;
+  --border-strong: #393140;
+  --border-dialog: #393441;
+  /* Accent and interaction feedback */
+  --accent: #8b5cf6;
+  --accent-text: #a77af8;
+  --accent-text-hover: #d8c5ff;
+  --accent-wash: #8b5cf610;
+  --accent-tint-faint: #8b5cf617;
+  --accent-tint-soft: #8b5cf62b;
+  --accent-border-soft: #8b5cf65c;
+  --selection-background: #8b5cf64d;
+  /* Shared button states */
+  --button-primary-border: #a37af6;
+  --button-primary-hover: #9a6ef7;
+  --button-secondary-border: #32333e;
+  --button-secondary-text: #d0ceda;
+  --button-secondary-hover: #292a35;
+  --danger: #a5334d;
+  --danger-border: #c34b66;
+  --danger-hover: #bc3b59;
+  --danger-hover-text: #ff9cb0;
+  --danger-hover-background: #e65b7b12;
+  /* Shared storage-error feedback */
+  --error-background: #402323;
+  --error-text: #ffb4b4;
+  --error-border: #c3686866;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  color: var(--text-primary);
+  background: var(--background);
   color-scheme: dark;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --accent: #8b5cf6;
-  --muted: #9b9ba9;
-  --border: #292a34;
 }
-* { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; }
-button, a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-button { font: inherit; cursor: pointer; color: inherit; }
-button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-::selection { background: #8b5cf64d; }
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-width: 320px;
+}
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+button {
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+::selection {
+  background: var(--selection-background);
+}
