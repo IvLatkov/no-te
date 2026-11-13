@@ -11,19 +11,28 @@ export default function NoteLinkPicker({
   onLink,
   onClose,
   error,
+  busy = false,
 }) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState(projectId)
   const [selected, setSelected] = useState([])
   const visible = selectNotes(notes, { query, projectId: filter, sort: 'title' })
   return (
-    <Modal title="Link documentation" className="note-link-picker" onClose={onClose} error={error}>
+    <Modal
+      title="Link documentation"
+      className="note-link-picker"
+      onClose={() => {
+        if (!busy) onClose()
+      }}
+      error={error}
+    >
       <label className="notes-search">
         <Search size={16} aria-hidden="true" />
         <input
           autoFocus
           type="search"
           aria-label="Search notes to link"
+          disabled={busy}
           placeholder="Search titles and note content…"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -33,6 +42,7 @@ export default function NoteLinkPicker({
         Show notes from
         <select
           aria-label="Filter notes to link"
+          disabled={busy}
           value={filter ?? ''}
           onChange={(event) => setFilter(event.target.value || null)}
         >
@@ -54,7 +64,7 @@ export default function NoteLinkPicker({
                 <input
                   type="checkbox"
                   aria-label={`Link ${note.title || 'Untitled note'}`}
-                  disabled={linked}
+                  disabled={busy || linked}
                   checked={linked || selected.includes(note.id)}
                   onChange={(event) =>
                     setSelected((ids) =>
@@ -81,13 +91,13 @@ export default function NoteLinkPicker({
         )}
       </div>
       <div className="modal-actions">
-        <button className="button secondary" type="button" onClick={onClose}>
+        <button className="button secondary" type="button" disabled={busy} onClick={onClose}>
           Cancel
         </button>
         <button
           className="button primary"
           type="button"
-          disabled={!selected.length}
+          disabled={busy || !selected.length}
           onClick={() => onLink(selected)}
         >
           Link {selected.length || ''} {selected.length === 1 ? 'note' : 'notes'}

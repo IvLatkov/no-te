@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { NotebookPen } from 'lucide-react'
 import { selectNotes } from '../../data/notes'
 import NotesList from './NotesList'
@@ -10,6 +10,7 @@ import FolderTree from './FolderTree'
 import FolderModal from './FolderModal'
 import TagSelector from '../TagSelector'
 import { validateNoteFolder } from '../../data/organization'
+import useNoteDrag from '../../hooks/useNoteDrag'
 
 export default function DocumentationWorkspace({
   notesState,
@@ -19,7 +20,7 @@ export default function DocumentationWorkspace({
   onOpenTask,
   organization,
 }) {
-  const { notes, store, status, error, readOnly } = notesState
+  const { notes, store, status, error, readOnly, busy = false } = notesState
   const [selectedId, setSelectedId] = useState(initialNoteId)
   const [filter, setFilter] = useState(projectScope || 'all')
   const [query, setQuery] = useState('')
@@ -29,6 +30,12 @@ export default function DocumentationWorkspace({
   const [tagIds, setTagIds] = useState([])
   const [folderAction, setFolderAction] = useState(null)
   const [metadataError, setMetadataError] = useState('')
+  const noteDrag = useNoteDrag({
+    store,
+    folders: organization.folders,
+    readOnly: readOnly || organization.readOnly,
+    onMoved: setFolderId,
+  })
   const selected = notes.find((note) => note.id === selectedId)
   const activeTags = tagIds.filter((id) => organization.tags.some((tag) => tag.id === id))
   const visible = selectNotes(notes, {
@@ -39,31 +46,40 @@ export default function DocumentationWorkspace({
     sort,
   })
   const filteredProject = projectScope || filter
-  const visibleFolders = organization.folders.filter(
-    (folder) =>
-      filteredProject === 'all' ||
-      folder.projectId === null ||
-      folder.projectId === filteredProject,
+  const visibleFolders = useMemo(
+    () =>
+      organization.folders.filter(
+        (folder) =>
+          filteredProject === 'all' ||
+          folder.projectId === null ||
+          folder.projectId === filteredProject,
+      ),
+    [organization.folders, filteredProject],
   )
-  const displayError = error || metadataError || organization.error
-  function select(id) {
-    if (store.flush()) setSelectedId(id)
+  const displayError = noteDrag.error || error || metadataError || organization.error
+  async function select(id) {
+    if (await store.flush()) setSelectedId(id)
   }
-  function changeFilter(value) {
-    if (store.flush()) {
+  async function changeFilter(value) {
+    if (await store.flush()) {
       setFilter(value)
       setFolderId('all')
       setSelectedId(null)
     }
   }
-  function changeFolder(value) {
-    if (store.flush()) {
-      setFolderId(value)
-      setSelectedId(null)
-      setMetadataError('')
-    }
-  }
-  function updateMetadata(patch) {
+  const changeFolder = useCallback(
+    async (value) => {
+      if (await store.flush()) {
+        setFolderId(value)
+        setSelectedId(null)
+        setMetadataError('')
+      }
+    },
+    [store],
+  )
+  async function updateMetadata(patch) {
+    if (noteDrag.enabled && Object.keys(patch).length === 1 && 'folderId' in patch)
+      return noteDrag.moveNote(selected.id, patch.folderId)
     try {
       validateNoteFolder({ ...selected, ...patch }, organization.folders)
       setMetadataError('')
@@ -74,8 +90,8 @@ export default function DocumentationWorkspace({
       return false
     }
   }
-  function duplicate() {
-    const copy = store.duplicate(selected.id)
+  async function duplicate() {
+    const copy = await store.duplicate(selected.id)
     if (copy) {
       setQuery('')
       setSelectedId(copy.id)
@@ -88,13 +104,20 @@ export default function DocumentationWorkspace({
           <p className="storage-error" role="alert">
             {displayError}
           </p>
-          {error && !readOnly && (
+          {error && !readOnly && status === 'error' && (
             <button type="button" className="button secondary" onClick={() => store.flush()}>
               Retry save
             </button>
           )}
-          {metadataError && (
-            <button type="button" className="text-action" onClick={() => setMetadataError('')}>
+          {(metadataError || noteDrag.error) && (
+            <button
+              type="button"
+              className="text-action"
+              onClick={() => {
+                setMetadataError('')
+                noteDrag.clearError()
+              }}
+            >
               Dismiss
             </button>
           )}
@@ -117,6 +140,7 @@ export default function DocumentationWorkspace({
         onSort={setSort}
         projectScope={projectScope}
         readOnly={readOnly}
+        noteDrag={noteDrag}
         hasFilters={folderId !== 'all' || activeTags.length > 0 || filteredProject !== 'all'}
         tagFilter={
           <>
@@ -133,8 +157,8 @@ export default function DocumentationWorkspace({
               <button
                 type="button"
                 className="text-action"
-                onClick={() => {
-                  if (store.flush()) {
+                onClick={async () => {
+                  if (await store.flush()) {
                     setQuery('')
                     setFolderId('all')
                     setTagIds([])
@@ -150,6 +174,7 @@ export default function DocumentationWorkspace({
         folderNavigation={
           <FolderTree
             folders={visibleFolders}
+            noteDrag={noteDrag}
             value={folderId}
             onChange={changeFolder}
             readOnly={readOnly || organization.readOnly}
@@ -184,6 +209,7 @@ export default function DocumentationWorkspace({
       )}
       {modal === 'create' && (
         <NoteModal
+          busy={busy}
           projects={projects}
           projectId={
             projectScope ||
@@ -197,10 +223,10 @@ export default function DocumentationWorkspace({
             setModal(null)
             setMetadataError('')
           }}
-          onSave={(values) => {
+          onSave={async (values) => {
             try {
               validateNoteFolder(values, organization.folders)
-              const note = store.create(values)
+              const note = await store.create(values)
               if (note) {
                 setModal(null)
                 setQuery('')
@@ -217,12 +243,13 @@ export default function DocumentationWorkspace({
       )}
       {modal === 'delete' && selected && (
         <ConfirmModal
+          busy={busy}
           title="Delete note?"
           message={`Delete “${selected.title || 'Untitled note'}”? This cannot be undone.`}
           error={error}
           onClose={() => setModal(null)}
-          onConfirm={() => {
-            if (store.remove(selected.id)) {
+          onConfirm={async () => {
+            if (await store.remove(selected.id)) {
               setSelectedId(null)
               setModal(null)
             }
@@ -231,6 +258,7 @@ export default function DocumentationWorkspace({
       )}
       {folderAction && folderAction.type !== 'delete' && (
         <FolderModal
+          busy={busy}
           folder={folderAction.folder}
           parentFolderId={folderAction.parentFolderId}
           initialProjectId={filteredProject === 'all' ? null : filteredProject}
@@ -238,19 +266,20 @@ export default function DocumentationWorkspace({
           projects={projects}
           error={organization.error}
           onClose={() => setFolderAction(null)}
-          onSave={(values, id) => {
-            if (organization.onSaveFolder(values, id)) setFolderAction(null)
+          onSave={async (values, id) => {
+            if (await organization.onSaveFolder(values, id)) setFolderAction(null)
           }}
         />
       )}
       {folderAction?.type === 'delete' && (
         <ConfirmModal
           title="Delete folder?"
+          busy={busy}
           message={`Delete “${folderAction.folder.name}” and all descendant folders? All contained notes will move to its parent folder, or become Unfiled if this is a top-level folder. Note content and project associations will be kept.`}
           error={displayError}
           onClose={() => setFolderAction(null)}
-          onConfirm={() => {
-            if (organization.onDeleteFolder(folderAction.folder.id)) {
+          onConfirm={async () => {
+            if (await organization.onDeleteFolder(folderAction.folder.id)) {
               setFolderId(folderAction.folder.parentFolderId)
               setFolderAction(null)
             }

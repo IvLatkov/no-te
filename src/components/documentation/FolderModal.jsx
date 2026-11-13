@@ -12,16 +12,24 @@ export default function FolderModal({
   onSave,
   onClose,
   error,
+  busy = false,
 }) {
   const [name, setName] = useState(folder?.name || '')
   const [parentFolderId, setParent] = useState(folder ? folder.parentFolderId : initialParent)
   const parent = folders.find((item) => item.id === parentFolderId)
   const [projectId, setProject] = useState(folder ? folder.projectId : initialProjectId)
   return (
-    <Modal title={folder ? 'Rename folder' : 'New folder'} onClose={onClose} error={error}>
+    <Modal
+      title={folder ? 'Rename folder' : 'New folder'}
+      onClose={() => {
+        if (!busy) onClose()
+      }}
+      error={error}
+    >
       <form
         onSubmit={(event) => {
           event.preventDefault()
+          if (busy) return
           onSave(
             { name, parentFolderId, projectId: parent ? parent.projectId : projectId },
             folder?.id,
@@ -31,6 +39,7 @@ export default function FolderModal({
         <label htmlFor="folder-name">Folder name</label>
         <input
           id="folder-name"
+          disabled={busy}
           autoFocus
           required
           maxLength={100}
@@ -43,6 +52,7 @@ export default function FolderModal({
             <select
               className="organization-select"
               aria-label="Parent folder"
+              disabled={busy}
               value={parentFolderId || ''}
               onChange={(event) => setParent(event.target.value || null)}
             >
@@ -61,14 +71,14 @@ export default function FolderModal({
           projects={projects}
           value={parent ? parent.projectId : projectId}
           onChange={setProject}
-          disabled={Boolean(parent) || Boolean(folder)}
+          disabled={busy || Boolean(parent) || Boolean(folder)}
         />
         <div className="modal-actions">
-          <button type="button" className="button secondary" onClick={onClose}>
+          <button type="button" className="button secondary" disabled={busy} onClick={onClose}>
             Cancel
           </button>
-          <button className="button primary" disabled={!name.trim()}>
-            Save folder
+          <button className="button primary" disabled={busy || !name.trim()}>
+            {busy ? 'Saving…' : 'Save folder'}
           </button>
         </div>
       </form>

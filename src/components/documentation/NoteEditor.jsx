@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { EditorContent, useEditor } from '@tiptap/react'
 import { ArrowLeft, Check, Copy, Loader2, Trash2, AlertCircle, Search } from 'lucide-react'
 import EditorToolbar from './EditorToolbar'
 import ProjectNoteSelector from './ProjectNoteSelector'
-import { editorExtensions } from './editorExtensions'
+import { editorExtensions, isSupportedDocument } from './editorExtensions'
+import { EMPTY_DOCUMENT } from '../../data/notes'
 import LinkedTasks from './LinkedTasks'
 import FolderSelector from './FolderSelector'
 import TagSelector from '../TagSelector'
@@ -27,11 +28,17 @@ export default function NoteEditor({
   onMetadataChange,
 }) {
   const [contentError, setContentError] = useState('')
+  const supported = useMemo(() => isSupportedDocument(note.content), [note.content])
+  const displayContentError =
+    contentError ||
+    (!supported
+      ? 'This note contains unsupported formatting. Its saved content has been preserved; editing is disabled.'
+      : '')
   const invalid = useRef(false)
   const editor = useEditor({
     extensions: editorExtensions(),
-    content: note.content,
-    editable: !readOnly,
+    content: supported ? note.content : EMPTY_DOCUMENT,
+    editable: !readOnly && supported,
     shouldRerenderOnTransaction: false,
     enableContentCheck: true,
     editorProps: {
@@ -50,12 +57,29 @@ export default function NoteEditor({
       )
     },
     onUpdate: ({ editor: current }) => {
-      if (!invalid.current) store.update(note.id, { content: current.getJSON() })
+      if (!invalid.current && supported) store.update(note.id, { content: current.getJSON() })
     },
   })
   useEffect(() => {
-    editor?.setEditable(!readOnly && !contentError, false)
-  }, [editor, readOnly, contentError])
+    editor?.setEditable(!readOnly && !displayContentError, false)
+  }, [editor, readOnly, displayContentError])
+  useEffect(() => {
+    if (!editor || !supported || invalid.current) return
+    try {
+      // JSONB can reorder object keys. Replacing an equivalent document resets
+      // the selection/history; compare ProseMirror nodes rather than JSON text.
+      if (editor.state.doc.eq(editor.schema.nodeFromJSON(note.content))) return
+      editor.commands.setContent(note.content, { emitUpdate: false, errorOnInvalidContent: true })
+    } catch {
+      invalid.current = true
+      editor.setEditable(false, false)
+      queueMicrotask(() =>
+        setContentError(
+          'This note contains unsupported formatting. Its saved content is preserved; editing is disabled.',
+        ),
+      )
+    }
+  }, [editor, note.content, supported])
   return (
     <section className="note-editor" aria-label="Note editor">
       <div className="note-editor-top">
@@ -147,12 +171,12 @@ export default function NoteEditor({
         </div>
         <LinkedTasks tasks={linkedTasks} onOpenTask={onOpenTask} />
       </div>
-      {contentError && (
+      {displayContentError && (
         <p className="storage-error" role="alert">
-          {contentError}
+          {displayContentError}
         </p>
       )}
-      <EditorToolbar editor={editor} disabled={readOnly || Boolean(contentError)} />
+      <EditorToolbar editor={editor} disabled={readOnly || Boolean(displayContentError)} />
       <div className="note-writing-area">
         <EditorContent editor={editor} />
       </div>

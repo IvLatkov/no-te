@@ -47,8 +47,8 @@ Existing projects, tasks, notes, folders, tags, relationships, and backups are
 local-only, with no verified account owner. They must not become visible to the
 next account that signs in on this browser. Consequently, the production account
 shell does **not** mount any legacy data hooks, searches, editors, or backup tools.
-Projects now displays only Supabase projects and tasks. Documentation continues
-to display a quarantine notice instead of browser records. No legacy data is
+Projects and Documentation now display only Supabase records, including folders,
+tags and relationships. No legacy data is
 uploaded, merged, assigned an owner, or reset.
 
 The former App implementation is preserved unchanged as `src/LocalWorkspace.jsx`,
@@ -112,11 +112,11 @@ network outcomes require a reload before retrying. There is no cloud localStorag
 cache, offline write queue or automatic legacy migration. Use **Refresh projects**
 for changes made in another tab; realtime sync is not implemented.
 
-Tags, linked documentation, folders, global search and cloud backups are not
-integrated yet. The board hides tag filters; the task dialog and Documentation
-view explain the limitation. Existing task_notes/task_tags/note_tags rows are
-never read, reset or replaced by edits. The legacy workspace retains its full
-features and storage format for the explicit migration iteration.
+Iteration 6.3C adds tags, linked documentation, folders and global search as
+described below. Cloud backups and legacy migration remain deferred. Ordinary
+task/project edits never send relationship arrays; explicit relationship actions
+use their own junction-table APIs. The legacy workspace retains its full features
+and storage format for the explicit migration iteration.
 
 ### Database setup and diagnostics
 
@@ -173,6 +173,166 @@ Manual checks with the real database and two separate test accounts are required
    existing localStorage data before and after, without clearing browser storage.
 6. Check mobile navigation/stacked columns, keyboard dialogs and native pointer
    dragging in an actual browser; jsdom only verifies the React drag handlers.
+
+## Cloud Documentation, organization and links — iteration 6.3C
+
+The authenticated app reuses the existing three-panel Documentation workspace,
+Tiptap toolbar, previews, sorting, project/folder/tag filters, nested folder tree,
+tag manager, link picker and backlinks. Rich content stays as Tiptap JSON in
+`notes.content`; no conversion to HTML is used for persistence or search. The
+editor preflights unsupported documents and unsafe links without logging the
+source JSON, disables editing, and preserves the original saved record. The
+editor and search/task dialogs load through lazy imports.
+
+`supabaseDocumentation.js` provides paged account-owned SELECTs and whitelisted
+INSERT/UPDATE/DELETE operations for notes, folders and tags. Notes can be fetched
+by project, created, edited, moved, duplicated and deleted. Duplicate notes keep
+content, project/folder association and tags with a new UUID and server timestamps.
+Folder validation mirrors the three-level hierarchy and project compatibility
+rules, while database triggers remain authoritative. Tag colors use the existing
+palette and duplicate-name constraint errors are surfaced without raw server text.
+
+`task_notes`, `task_tags` and `note_tags` are fetched under RLS. Assignments use
+composite-key upserts with ignoreDuplicates, scoped removal of individual links,
+and a read-back check. Reconciliation adds desired links before removing unwanted
+ones and can be retried after partial failure. No tag/link ID arrays are written
+to task or note rows; arrays in the UI are derived from junction rows. Task tags
+appear on the board and in filters; note tags appear in the editor and note filters.
+
+Cloud task details support linking existing notes, unlinking without deleting
+notes, and creating a project-associated note from a task. If creating the note
+succeeds but linking fails, the UI retains the created note and offers **Retry
+linking**, without another INSERT. Notes show linked task backlinks; following a
+linked note first saves the task form. Search indexes cloud projects, tasks, note
+titles/content and assigned tag names, plus standalone tags which open the tag
+manager. Search and navigation await any pending note save.
+
+### Save lifecycle and account isolation
+
+Notes can be dragged from their cards onto folders (including nested folders) or
+**Unfiled**. Purple borders and the move cursor indicate valid destinations;
+incompatible project folders show an invalid state and explanation. Hovering a
+collapsed valid folder expands it after about 600ms, and dragging near the top or
+bottom of the notes panel scrolls the panel. One requestAnimationFrame loop owns
+edge scrolling; it stops at scroll limits, on real container exit, drop, drag end,
+blur or unmount. Repeated stationary events do not schedule React hover updates.
+Folder rows and tree indexing are memoized, nested icon/label transitions retain
+the hovered row, and the status hint has a fixed height to avoid moving targets.
+Drag release does not select/open a
+different note. On success, the folder view follows the moved note while keeping
+the current query, tag/project filters and editor selection.
+
+Drag/drop and the editor's keyboard-accessible **Folder** selector use the same
+cloud move operation. It flushes pending edits, checks the destination against
+fresh account-owned folders, and sends only `folder_id` to the existing notes
+UPDATE API. The server supplies `updated_at` through its existing behavior. It
+does not change the note's project, ID, rich content, tags or links. Incompatible
+destinations are blocked without assigning a new project; RLS and the existing
+note-folder trigger still apply. Pending drops are deduplicated. Folder state
+changes only after server acknowledgment; errors retain the previous view and
+reload authoritative data if the outcome is uncertain.
+
+Native HTML drag/drop is primarily for desktop browsers; touch users can use the
+Folder selector. Automated tests exercise React drag events, validation, hover
+expansion, scrolling, cancellation, success/failure, selection, filters, keyboard
+movement, persistence, and unchanged legacy storage. Actual pointer dragging,
+native scroll behavior, touch fallback and live Supabase trigger/RLS behavior
+still require browser checks. Cross-tab/external drag payloads are ignored.
+
+`cloudDocumentationStore.js` is an account-scoped, memory-only store. Editor
+updates queue a roughly 500ms debounce and show Saving/Saved/Not saved. Writes
+are serialized, and changes typed during a request remain queued and take
+precedence over that request's response. Refreshes merge pending drafts rather
+than replacing them. Navigation, note switching, metadata changes and Settings
+sign-out await a flush; failure keeps the draft open and offers retry. Browser
+unload warns while unsaved notes exist, but browsers cannot guarantee completion
+of asynchronous network requests during shutdown.
+
+All cloud API operations now pin the token whose identity was verified to their
+request headers, so an ambient SDK account switch cannot submit an old account's
+form using the next account's credentials. Abort signals and store generations
+prevent late replies from restoring old account state. Same-account token refresh
+does not remount the editor. A forced logout/session loss clears in-memory drafts
+for privacy and shows an explicit unsaved-change notice without exposing content.
+There is no offline persistence, recovery of drafts after a forced session loss,
+realtime subscription, or multi-tab conflict resolution.
+
+### Multi-step deletion and database verification
+
+Folder deletion first fetches the subtree and its notes, relocates every affected
+note to the surviving parent or Unfiled, verifies that no fetched note still
+references the subtree, and removes folders from leaves upward. It then checks
+that the original note IDs remain present. It never issues a notes DELETE for a
+folder operation. Partial failures leave already relocated notes saved, reload
+server state, and report that the operation did not fully complete. There is no
+destructive compensating rollback. Creating/duplicating a note also retains its
+attempt UUID across retries, preventing duplicate INSERTs after uncertain responses.
+
+These are multiple REST requests, not a database transaction. Concurrent folder
+changes cannot be made atomic by this client. Before relying on folder deletion
+with concurrent writers, manually confirm the deployed FK behavior preserves
+notes (e.g. notes.folder_id ON DELETE SET NULL), folder subtree handling, and all
+validation triggers. A transactional server API would be a separate reviewed
+database iteration; none has been created here.
+
+No live schema/RLS inconsistency was established by the mocked tests. The API
+reports exact table names and known schema/constraint codes, and rejects missing
+owner defaults rather than allowing the UI to select an arbitrary owner. An
+administrator can inspect the configuration with these **read-only** queries:
+
+```sql
+select table_name, column_name, column_default
+from information_schema.columns
+where table_schema = 'public' and column_name = 'user_id'
+  and table_name in ('projects', 'notes', 'folders', 'tags');
+
+select conrelid::regclass as table_name, conname,
+       pg_get_constraintdef(oid) as definition
+from pg_constraint
+where contype = 'f'
+  and conrelid in ('public.notes'::regclass, 'public.folders'::regclass,
+                  'public.task_notes'::regclass, 'public.task_tags'::regclass,
+                  'public.note_tags'::regclass);
+```
+
+If an owner default is missing, the project-default recommendation above also
+applies to that specific table's `user_id` column, subject to manual review and
+an RLS INSERT check enforcing the authenticated owner. Do not disable policies
+or triggers. No SQL, schema changes, legacy uploads, storage resets, or backup-file
+rewrites were executed by this implementation.
+
+### Verification for 6.3C
+
+Automated model/UI tests cover JSON round trips, note CRUD/duplication, autosave
+debounce and interrupted/slow saves, new edits during old requests, refresh,
+hierarchy validation, note relocation and partial folder deletion, multiple tags,
+idempotent relationships, partial create/link retry, bidirectional navigation,
+tag/content search, unsupported formatting, token refresh, sign-out isolation,
+credential pinning, and byte-for-byte preservation of seeded legacy storage.
+They use a mock Supabase API, not the deployed database. Previous local editor,
+board, search and backup regression suites still run.
+
+Manual checks against the real Supabase project remain required:
+
+1. Create and format notes with headings, links, lists/checklists and code blocks;
+   exercise undo/redo, rename, duplicate, delete, refresh and re-login. Confirm
+   actual JSONB contents and timestamp behavior, including project-scoped notes.
+2. Interrupt network access during autosave, type again while saving, attempt
+   navigation and retry. Check the unload warning, normal logout flush, token
+   renewal, and forced logout notice. Inspect desktop/mobile layouts and focus.
+3. Create general/project folders through level three; verify level-four, cycle,
+   and incompatible project/folder writes are rejected by deployed triggers.
+   Move notes, delete a disposable populated subtree, and inspect note survival,
+   project associations and FK behavior before attempting concurrent operations.
+4. Create/rename/delete tags, assign several to tasks and notes, remove individual
+   assignments, filter, and search. Confirm junction rows and duplicate-name
+   constraints. Ordinary task/note edits must preserve unrelated assignments.
+5. Link/unlink existing notes, create from a task, exercise a link failure/retry,
+   and navigate in both directions. Check junction FK cleanup without note loss.
+6. With separate A/B profiles, attempt cross-user SELECT/UPDATE/DELETE and forged
+   INSERTs for notes/folders/tags and every junction table. Use ordinary user JWTs
+   and the publishable client; postgres/service_role SQL is not an RLS test.
+   Check anonymous denial, ownership spoofing, and a switch during a slow request.
 
 ## Projects and tasks (preserved local workspace)
 

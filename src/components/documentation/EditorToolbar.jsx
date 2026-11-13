@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import Modal from '../Modal'
 import { safeLink } from './editorExtensions'
+import { exitCodeBlock } from './editorCommands'
 
 function LinkModal({ editor, onClose }) {
   const [value, setValue] = useState(editor.getAttributes('link').href || '')
@@ -144,6 +145,9 @@ export default function EditorToolbar({ editor, disabled }) {
                 title={label}
                 aria-pressed={active ? Boolean(state?.[active]) : undefined}
                 disabled={disabled || !editor || unavailable}
+                onPointerDown={(event) => {
+                  if (event.button === 0) event.preventDefault()
+                }}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={action}
               >
@@ -152,6 +156,21 @@ export default function EditorToolbar({ editor, disabled }) {
             ))}
           </div>
         ))}
+        {state?.code && (
+          <button
+            type="button"
+            className="exit-code-button"
+            disabled={disabled || !editor}
+            title="Exit code block (Ctrl+Enter / ⌘+Enter)"
+            onPointerDown={(event) => {
+              if (event.button === 0) event.preventDefault()
+            }}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => exitCodeBlock(editor)}
+          >
+            Exit code block
+          </button>
+        )}
       </div>
       {linkOpen && editor && <LinkModal editor={editor} onClose={() => setLinkOpen(false)} />}
     </>

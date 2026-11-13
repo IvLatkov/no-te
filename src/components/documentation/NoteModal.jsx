@@ -12,15 +12,23 @@ export default function NoteModal({
   lockProject = false,
   folders = [],
   initialFolderId = null,
+  busy = false,
 }) {
   const [title, setTitle] = useState('')
   const [projectId, setProjectId] = useState(initialProjectId)
   const [folderId, setFolderId] = useState(initialFolderId)
   return (
-    <Modal title="New note" onClose={onClose} error={error}>
+    <Modal
+      title="New note"
+      onClose={() => {
+        if (!busy) onClose()
+      }}
+      error={error}
+    >
       <form
         onSubmit={(event) => {
           event.preventDefault()
+          if (busy) return
           onSave({ title, projectId, folderId })
         }}
       >
@@ -28,6 +36,7 @@ export default function NoteModal({
         <input
           autoFocus
           id="new-note-title"
+          disabled={busy}
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           maxLength={200}
@@ -37,19 +46,22 @@ export default function NoteModal({
           projects={projects}
           value={projectId}
           onChange={setProjectId}
-          disabled={lockProject}
+          disabled={lockProject || busy}
         />
         <FolderSelector
+          disabled={busy}
           folders={folders}
           projectId={projectId}
           value={folderId}
           onChange={setFolderId}
         />
         <div className="modal-actions">
-          <button type="button" className="button secondary" onClick={onClose}>
+          <button type="button" className="button secondary" disabled={busy} onClick={onClose}>
             Cancel
           </button>
-          <button className="button primary">Create note</button>
+          <button className="button primary" disabled={busy}>
+            {busy ? 'Saving…' : 'Create note'}
+          </button>
         </div>
       </form>
     </Modal>

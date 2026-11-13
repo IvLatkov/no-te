@@ -112,6 +112,7 @@
   overflow-y: auto;
 }
 .note-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 9px;
@@ -129,6 +130,38 @@
 .note-card.is-selected {
   background: #8b5cf613;
   border-color: #8b5cf63b;
+}
+.note-card[draggable='true'] {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.note-card[draggable='true'] .note-card-title {
+  padding-right: 18px;
+}
+.note-drag-handle {
+  position: absolute;
+  top: 18px;
+  right: 10px;
+  color: var(--muted);
+  opacity: 0.5;
+}
+.note-card.is-dragging {
+  opacity: 0.55;
+  border: 1px dashed var(--accent);
+  cursor: grabbing;
+}
+.note-card.is-moving {
+  opacity: 0.7;
+  cursor: progress;
+}
+.note-drag-status {
+  height: 3.2em;
+  overflow: hidden;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
 }
 .note-card-title {
   display: block;
@@ -313,6 +346,20 @@
 .editor-toolbar .is-active {
   color: #c8a7ff;
   background: #8b5cf626;
+}
+.exit-code-button {
+  align-self: center;
+  margin-left: 8px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+}
+.exit-code-button:hover {
+  color: var(--accent-text-hover);
+  background: var(--accent-tint-faint);
 }
 .note-writing-area {
   padding: 30px clamp(20px, 4vw, 62px) 80px;

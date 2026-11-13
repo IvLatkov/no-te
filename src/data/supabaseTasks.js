@@ -53,7 +53,7 @@ export function createTasksApi(client = supabase, userId) {
     )
   }
   const api = {
-    async fetchTasks(projectIds, { signal } = {}) {
+    async fetchTasks(projectIds, { signal = new AbortController().signal } = {}) {
       await requireCloudUser(client, userId, signal)
       if (!projectIds.length) return []
       const rows = []
@@ -73,7 +73,7 @@ export function createTasksApi(client = supabase, userId) {
       }
       return rows.map(taskModel)
     },
-    async createTask(projectId, input, { signal } = {}) {
+    async createTask(projectId, input, { signal = new AbortController().signal } = {}) {
       await requireCloudUser(client, userId, signal)
       await ownedProject(projectId, signal)
       const values = patch({
@@ -94,7 +94,7 @@ export function createTasksApi(client = supabase, userId) {
       )
       return taskModel(row)
     },
-    async updateTask(projectId, id, input, { signal } = {}) {
+    async updateTask(projectId, id, input, { signal = new AbortController().signal } = {}) {
       await requireCloudUser(client, userId, signal)
       await ownedProject(projectId, signal)
       const row = await cloudResult(
@@ -111,7 +111,7 @@ export function createTasksApi(client = supabase, userId) {
       )
       return taskModel(row)
     },
-    async deleteTask(projectId, id, { signal } = {}) {
+    async deleteTask(projectId, id, { signal = new AbortController().signal } = {}) {
       await requireCloudUser(client, userId, signal)
       await ownedProject(projectId, signal)
       await cloudResult(

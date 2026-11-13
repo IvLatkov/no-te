@@ -16,13 +16,13 @@ export function AuthProvider({ children, client = supabase, configError = config
     let events = 0
     const {
       data: { subscription },
-    } = client.auth.onAuthStateChange((_event, session) => {
+    } = client.auth.onAuthStateChange((event, session) => {
       // Keep this callback synchronous; Auth calls run in effects outside its lock.
       events += 1
       if (active) {
         setError('')
         if (!session) setVerified(null)
-        setCandidate(session)
+        setCandidate(session ? { ...session, continuity: event === 'TOKEN_REFRESHED' } : null)
       }
     })
     const version = events
@@ -122,7 +122,10 @@ export function AuthProvider({ children, client = supabase, configError = config
   }
 
   const user =
-    candidate && verified?.client === client && verified.token === candidate.access_token
+    candidate &&
+    verified?.client === client &&
+    (verified.token === candidate.access_token ||
+      (candidate.continuity && verified.user.id === candidate.user.id))
       ? verified.user
       : null
   return (
@@ -133,6 +136,7 @@ export function AuthProvider({ children, client = supabase, configError = config
         signIn,
         signOut,
         error,
+        reportSessionNotice: setError,
         configError: configError || (!client ? 'Supabase is not configured.' : ''),
         loading: !configError && !!client && (candidate === undefined || (!!candidate && !user)),
         retry: () => {

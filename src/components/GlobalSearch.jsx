@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { FileText, Layers, Search, SquareCheck } from 'lucide-react'
+import { FileText, Layers, Search, SquareCheck, Tag } from 'lucide-react'
 import Modal from './Modal'
 import { buildSearchIndex, searchExcerpt, searchIndex } from '../data/search'
 
@@ -15,16 +15,26 @@ function Highlight({ text, query }) {
     </>
   )
 }
-const icons = { Projects: Layers, Tasks: SquareCheck, Documentation: FileText }
+const icons = { Projects: Layers, Tasks: SquareCheck, Documentation: FileText, Tags: Tag }
 
-export default function GlobalSearch({ projects, notes, tags, onNavigate, onClose }) {
+export default function GlobalSearch({
+  projects,
+  notes,
+  tags,
+  onNavigate,
+  onClose,
+  includeTags = false,
+}) {
   const [query, setQuery] = useState('')
   const [debounced, setDebounced] = useState('')
   const [active, setActive] = useState(0)
   const [error, setError] = useState('')
   const input = useRef(null)
   const prefix = useId()
-  const index = useMemo(() => buildSearchIndex(projects, notes, tags), [projects, notes, tags])
+  const index = useMemo(
+    () => buildSearchIndex(projects, notes, tags, { includeTags }),
+    [projects, notes, tags, includeTags],
+  )
   const results = useMemo(() => searchIndex(index, debounced), [index, debounced])
   const pending = query !== debounced
   const activeIndex = Math.min(active, Math.max(results.length - 1, 0))
@@ -38,8 +48,8 @@ export default function GlobalSearch({ projects, notes, tags, onNavigate, onClos
   useEffect(() => {
     document.getElementById(`${prefix}-${activeIndex}`)?.scrollIntoView?.({ block: 'nearest' })
   }, [prefix, activeIndex])
-  function choose(result) {
-    if (onNavigate(result)) onClose()
+  async function choose(result) {
+    if (await onNavigate(result)) onClose()
     else
       setError(
         'Your current changes could not be saved. Close search and retry saving before navigating.',
@@ -100,7 +110,7 @@ export default function GlobalSearch({ projects, notes, tags, onNavigate, onClos
         aria-busy={pending}
       >
         {!pending &&
-          ['Projects', 'Tasks', 'Documentation'].map((type) => {
+          ['Projects', 'Tasks', 'Documentation', ...(includeTags ? ['Tags'] : [])].map((type) => {
             const matches = results.filter((item) => item.type === type)
             const Icon = icons[type]
             return matches.length ? (
@@ -137,7 +147,9 @@ export default function GlobalSearch({ projects, notes, tags, onNavigate, onClos
                             ? 'Note'
                             : type === 'Tasks'
                               ? 'Task'
-                              : 'Project'}
+                              : type === 'Tags'
+                                ? 'Tag'
+                                : 'Project'}
                         </small>
                       </span>
                     </button>

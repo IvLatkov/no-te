@@ -1,7 +1,15 @@
 import { useState } from 'react'
 import Modal from './Modal'
 
-export default function TaskModal({ task, onSave, onClose, error, busy = false, details = false }) {
+export default function TaskModal({
+  task,
+  onSave,
+  onClose,
+  error,
+  busy = false,
+  details = false,
+  children,
+}) {
   const [title, setTitle] = useState(task?.title ?? '')
   const [description, setDescription] = useState(task?.description ?? '')
   const [status, setStatus] = useState(task?.status ?? 'todo')
@@ -62,10 +70,6 @@ export default function TaskModal({ task, onSave, onClose, error, busy = false, 
               disabled={busy}
               onChange={(event) => setImplementationNotes(event.target.value)}
             />
-            <p className="task-section-empty">
-              Tags and linked documentation are unavailable until iteration 6.3C. Existing cloud
-              relationships are not read or changed.
-            </p>
             <div className="task-detail-timestamps">
               {['createdAt', 'updatedAt'].map((field) => (
                 <span key={field}>
@@ -78,6 +82,7 @@ export default function TaskModal({ task, onSave, onClose, error, busy = false, 
             </div>
           </>
         )}
+        {children}
         <div className="modal-actions">
           <button type="button" className="button secondary" disabled={busy} onClick={onClose}>
             Cancel

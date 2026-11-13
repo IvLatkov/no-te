@@ -50,10 +50,11 @@ test('cloud UI reuses project/board controls for CRUD, notes, movement, drag eve
     await ui.waitFor(noDialog)
     assert.equal(client.tasks.length, 1)
     await ui.click(ui.byLabel('Open task Ship'))
+    await ui.waitFor(() => document.querySelector('#cloud-task-implementation'))
     await ui.input(document.querySelector('#task-title'), 'Ship v2')
     await ui.input(document.querySelector('#cloud-task-implementation'), 'Commands\nDecisions')
-    assert.match(document.querySelector('dialog').textContent, /unavailable until iteration 6.3C/)
-    assert.equal(document.querySelector('.tag-selector'), null)
+    assert.match(document.querySelector('dialog').textContent, /Linked documentation/)
+    assert.ok(document.querySelector('.tag-selector'))
     assert.ok(document.querySelector('.task-detail-timestamps time').dateTime)
     await ui.submit()
     await ui.waitFor(noDialog)
@@ -113,7 +114,11 @@ test('cloud UI reuses project/board controls for CRUD, notes, movement, drag eve
     assert.equal(client.tasks.length, 0)
     assert.match(document.body.textContent, /A fresh start/)
     assert.deepEqual(legacy(), original)
-    assert.ok(client.calls.every((call) => ['projects', 'tasks'].includes(call.table)))
+    assert.ok(
+      client.calls
+        .filter((call) => call.op !== 'select')
+        .every((call) => ['projects', 'tasks'].includes(call.table)),
+    )
   } finally {
     await ui.close()
   }

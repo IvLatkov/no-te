@@ -26,7 +26,7 @@ export function createProjectsApi(client = supabase, userId) {
     }
   }
   return {
-    async fetchProjects({ signal } = {}) {
+    async fetchProjects({ signal = new AbortController().signal } = {}) {
       await requireCloudUser(client, userId, signal)
       const rows = await cloudRows(
         () =>
@@ -40,7 +40,7 @@ export function createProjectsApi(client = supabase, userId) {
       )
       return rows.map(projectModel)
     },
-    async createProject(input, { signal } = {}) {
+    async createProject(input, { signal = new AbortController().signal } = {}) {
       await requireCloudUser(client, userId, signal)
       // user_id, IDs and timestamps must be supplied by database defaults/triggers.
       // Never spread caller input into a write or accept a caller-selected owner.
@@ -53,7 +53,7 @@ export function createProjectsApi(client = supabase, userId) {
       )
       return projectModel(row)
     },
-    async updateProject(id, input, { signal } = {}) {
+    async updateProject(id, input, { signal = new AbortController().signal } = {}) {
       await requireCloudUser(client, userId, signal)
       const row = await cloudResult(
         table().update(values(input)).eq('id', id).eq('user_id', userId).select(columns).single(),
@@ -64,7 +64,7 @@ export function createProjectsApi(client = supabase, userId) {
       )
       return projectModel(row)
     },
-    async deleteProject(id, { signal } = {}) {
+    async deleteProject(id, { signal = new AbortController().signal } = {}) {
       await requireCloudUser(client, userId, signal)
       // The server performs task CASCADE and preserves notes through SET NULL.
       await cloudResult(

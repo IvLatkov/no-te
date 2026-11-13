@@ -4,14 +4,21 @@ import Modal from './Modal'
 import ConfirmModal from './ConfirmModal'
 import { TAG_COLORS } from '../data/organization'
 
-function TagForm({ tag, onSave, onClose, error }) {
+function TagForm({ tag, onSave, onClose, error, busy }) {
   const [name, setName] = useState(tag?.name || '')
   const [color, setColor] = useState(tag?.color || TAG_COLORS[0].value)
   return (
-    <Modal title={tag ? 'Edit tag' : 'New tag'} error={error} onClose={onClose}>
+    <Modal
+      title={tag ? 'Edit tag' : 'New tag'}
+      error={error}
+      onClose={() => {
+        if (!busy) onClose()
+      }}
+    >
       <form
         onSubmit={(event) => {
           event.preventDefault()
+          if (busy) return
           onSave({ name, color })
         }}
       >
@@ -19,12 +26,13 @@ function TagForm({ tag, onSave, onClose, error }) {
         <input
           autoFocus
           id="tag-name"
+          disabled={busy}
           required
           maxLength={40}
           value={name}
           onChange={(event) => setName(event.target.value)}
         />
-        <fieldset className="tag-palette">
+        <fieldset className="tag-palette" disabled={busy}>
           <legend>Color</legend>
           {TAG_COLORS.map((option) => (
             <label key={option.value} style={{ '--tag-color': option.value }}>
@@ -40,11 +48,11 @@ function TagForm({ tag, onSave, onClose, error }) {
           ))}
         </fieldset>
         <div className="modal-actions">
-          <button type="button" className="button secondary" onClick={onClose}>
+          <button type="button" className="button secondary" disabled={busy} onClick={onClose}>
             Cancel
           </button>
-          <button className="button primary" disabled={!name.trim()}>
-            Save tag
+          <button className="button primary" disabled={busy || !name.trim()}>
+            {busy ? 'Saving…' : 'Save tag'}
           </button>
         </div>
       </form>
@@ -52,11 +60,28 @@ function TagForm({ tag, onSave, onClose, error }) {
   )
 }
 
-export default function TagManager({ tags, onSave, onDelete, onClose, error, readOnly }) {
-  const [action, setAction] = useState(null)
+export default function TagManager({
+  tags,
+  onSave,
+  onDelete,
+  onClose,
+  error,
+  readOnly,
+  initialTag,
+  busy = false,
+}) {
+  const [action, setAction] = useState(() =>
+    initialTag ? { type: 'edit', tag: initialTag } : null,
+  )
   return (
     <>
-      <Modal title="Manage tags" error={error} onClose={onClose}>
+      <Modal
+        title="Manage tags"
+        error={error}
+        onClose={() => {
+          if (!busy) onClose()
+        }}
+      >
         <div className="tag-manager-list">
           {tags.map((tag) => (
             <div className="tag-manager-row" key={tag.id}>
@@ -100,22 +125,24 @@ export default function TagManager({ tags, onSave, onDelete, onClose, error, rea
       </Modal>
       {action && action.type !== 'delete' && (
         <TagForm
+          busy={busy}
           tag={action.tag}
           error={error}
           onClose={() => setAction(null)}
-          onSave={(values) => {
-            if (onSave(values, action.tag?.id)) setAction(null)
+          onSave={async (values) => {
+            if (await onSave(values, action.tag?.id)) setAction(null)
           }}
         />
       )}
       {action?.type === 'delete' && (
         <ConfirmModal
+          busy={busy}
           title="Delete tag?"
           message={`Remove “${action.tag.name}” from every task and note? The tasks and notes will be kept.`}
           error={error}
           onClose={() => setAction(null)}
-          onConfirm={() => {
-            if (onDelete(action.tag.id)) setAction(null)
+          onConfirm={async () => {
+            if (await onDelete(action.tag.id)) setAction(null)
           }}
         />
       )}

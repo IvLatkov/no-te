@@ -319,6 +319,22 @@ select:focus-visible {
   color: #c8aaf2;
   background: #8b5cf618;
 }
+.folder-tree [data-note-drop='valid'] {
+  box-shadow: inset 0 0 0 1px var(--accent-border-soft);
+}
+.folder-tree [data-note-drop='invalid'] {
+  opacity: 0.55;
+}
+.folder-tree [data-note-drop='over-valid'] {
+  background: var(--accent-tint-soft);
+  box-shadow: inset 0 0 0 2px var(--accent);
+  color: var(--accent-text-hover);
+}
+.folder-tree [data-note-drop='over-invalid'] {
+  background: var(--danger-hover-background);
+  box-shadow: inset 0 0 0 1px var(--danger-hover-text);
+  cursor: not-allowed;
+}
 .folder-disclosure {
   display: inline-grid;
   place-items: center;

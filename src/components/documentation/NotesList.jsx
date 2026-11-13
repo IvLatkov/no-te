@@ -1,5 +1,6 @@
 import { Plus, Search, FileText } from 'lucide-react'
 import NoteCard from './NoteCard'
+import useNoteDragScroll from '../../hooks/useNoteDragScroll'
 
 export default function NotesList({
   notes,
@@ -18,9 +19,11 @@ export default function NotesList({
   folderNavigation,
   tagFilter,
   hasFilters,
+  noteDrag,
 }) {
+  const scroll = useNoteDragScroll(noteDrag?.draggingId)
   return (
-    <section className="notes-panel" aria-label="Notes list">
+    <section className="notes-panel" aria-label="Notes list" {...scroll}>
       <div className="notes-panel-top">
         <div className="notes-panel-heading">
           <h2>
@@ -77,6 +80,12 @@ export default function NotesList({
           </label>
         </div>
         {tagFilter}
+        {noteDrag?.enabled && (
+          <p className="note-drag-status" role="status" aria-live="polite">
+            {noteDrag.message ||
+              'Drag notes to a folder, or use the Folder selector in the editor.'}
+          </p>
+        )}
       </div>
       {folderNavigation}
       <div className="notes-list">
@@ -87,6 +96,8 @@ export default function NotesList({
               note={note}
               selected={note.id === selectedId}
               onSelect={() => onSelect(note.id)}
+              noteDrag={noteDrag}
+              readOnly={readOnly}
             />
           ))
         ) : (

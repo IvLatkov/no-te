@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from './useAuth'
 import { testDatabaseConnection } from '../lib/connectionTest'
 
-export default function AccountSettings() {
+export default function AccountSettings({ beforeSignOut }) {
   const { client, user, signOut } = useAuth()
   const [connection, setConnection] = useState(null)
   const [checking, setChecking] = useState(false)
@@ -30,6 +30,13 @@ export default function AccountSettings() {
   async function logout() {
     setSigningOut(true)
     setError('')
+    if (beforeSignOut && !(await beforeSignOut())) {
+      setError(
+        'Your notes could not be saved. Retry saving before signing out; your draft is still open.',
+      )
+      setSigningOut(false)
+      return
+    }
     const failure = await signOut()
     if (failure) {
       setError(failure)
