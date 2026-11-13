@@ -18,6 +18,7 @@ export default function TaskBoard({
   onMove,
   readOnly,
   organization,
+  relationshipsAvailable = true,
 }) {
   const [dragging, setDragging] = useState(null)
   const [over, setOver] = useState(null)
@@ -77,12 +78,14 @@ export default function TaskBoard({
             <option value="updated">Recently updated</option>
           </select>
         </label>
-        <TagSelector
-          label="Filter task tags"
-          tags={organization.tags}
-          value={activeTags}
-          onChange={setTagIds}
-        />
+        {relationshipsAvailable && (
+          <TagSelector
+            label="Filter task tags"
+            tags={organization.tags}
+            value={activeTags}
+            onChange={setTagIds}
+          />
+        )}
         {filtering && (
           <button
             type="button"

@@ -71,6 +71,21 @@ function fakeSupabase() {
       fake.queries.push(['select', value])
       return fake
     },
+    eq() {
+      return fake
+    },
+    order() {
+      return fake
+    },
+    range() {
+      return fake
+    },
+    abortSignal() {
+      return fake
+    },
+    then(resolve, reject) {
+      return Promise.resolve({ data: [], error: null }).then(resolve, reject)
+    },
     async limit(value) {
       fake.queries.push(['limit', value])
       return { data: [], error: fake.queryError }
@@ -116,7 +131,7 @@ test('authentication gates production UI, handles invalid login, restores sessio
     await login(ui)
     await ui.waitFor(() => document.querySelector('.sidebar'))
     await ui.click(document.querySelectorAll('.primary-nav button')[1])
-    assert.match(document.body.textContent, /Local-only content is preserved/)
+    assert.match(document.body.textContent, /Local-only browser content remains quarantined/)
     assert.doesNotMatch(document.body.textContent, /Quarantined/)
     await ui.click(document.querySelectorAll('.primary-nav button')[2])
     assert.equal(document.querySelector('.note-prose'), null)
@@ -124,6 +139,7 @@ test('authentication gates production UI, handles invalid login, restores sessio
     await ui.waitFor(() => document.querySelector('.sidebar'))
     await settings(ui)
     assert.match(document.body.textContent, /account-a@example.com/)
+    client.queries.length = 0
     await ui.click(ui.byText('Test connection'))
     assert.match(document.querySelector('.connection-success').textContent, /Connected/)
     assert.deepEqual(client.queries, [

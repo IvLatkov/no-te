@@ -47,8 +47,9 @@ Existing projects, tasks, notes, folders, tags, relationships, and backups are
 local-only, with no verified account owner. They must not become visible to the
 next account that signs in on this browser. Consequently, the production account
 shell does **not** mount any legacy data hooks, searches, editors, or backup tools.
-Projects and Documentation display a quarantine notice instead of browser records.
-There is no remote CRUD, data upload, merge, ownership assignment, or storage reset.
+Projects now displays only Supabase projects and tasks. Documentation continues
+to display a quarantine notice instead of browser records. No legacy data is
+uploaded, merged, assigned an owner, or reset.
 
 The former App implementation is preserved unchanged as `src/LocalWorkspace.jsx`,
 along with all storage utilities, board/editor components and backup features.
@@ -56,7 +57,7 @@ It is not reachable through a production route or opt-out flag. Its existing
 regression tests continue to run against that component. Reconnecting these
 features to account data, including safe backup access, requires the deliberate
 migration/data-layer iteration. The following earlier feature documentation
-describes this retained local workspace, not currently available account features.
+describes this retained local workspace. The current cloud subset is described below.
 
 ### Verification for authentication
 
@@ -75,6 +76,103 @@ Manual checks with your real Supabase project are still required:
 - Test network/permission failures, retry, sign out, expired sessions, and another
   account in the same browser. No legacy titles or content should appear.
 - Check desktop/mobile navigation, keyboard focus, login form and Settings layout.
+
+## Cloud Projects and Tasks — iteration 6.3B
+
+Authenticated Projects uses the existing cards, sidebar, project workspace,
+To Do/Done board, dialogs, filters and native drag/drop handlers. Create or edit
+a project, open it from the sidebar, then add tasks. Editing a cloud task supports
+title, description, status, Implementation Notes and server timestamps. Cloud task
+details use an explicit **Save task** button; they do not reuse the synchronous
+local autosave hook for network requests. Deletions require confirmation.
+
+`supabaseProjects.js` and `supabaseTasks.js` are the cloud data boundary. All calls
+verify the current Auth user against the mounted account. Project SELECTs and
+mutations are scoped by that verified user ID, task mutations verify an owned
+existing parent, and all operations still rely on server RLS. INSERT/UPDATE
+payloads use whitelists; caller-supplied owners, IDs, timestamps, foreign-key
+changes, tags and note links are never spread into writes. Projects omit `user_id`
+so the database must supply the authenticated owner. Task inserts explicitly set
+the selected owned `project_id`. Only `todo` and `done` statuses are accepted.
+
+Queries use the documented snake_case columns and map to the existing UI's
+camelCase fields. SELECTs are paged with stable created_at/id ordering and exact
+counts; task project-ID lists are batched. INSERT/UPDATE return server rows;
+DELETE returns the affected ID so an RLS-filtered zero-row mutation is not reported
+as success. Project deletion issues only a projects DELETE, relying on the existing
+task ON DELETE CASCADE and note ON DELETE SET NULL relationships. It never sends
+a notes DELETE. No tables, triggers, grants or policies are changed by the app.
+
+`cloudProjectsStore.js` keeps account-specific data in memory and refreshes after
+successful writes. It serializes writes, rejects overlapping submissions, cancels
+requests on unmount, discards out-of-date responses and clears cached records on
+sign-out. A write acknowledged by the server remains successful even if the
+following refresh fails, avoiding an automatic duplicate INSERT retry. Unknown
+network outcomes require a reload before retrying. There is no cloud localStorage
+cache, offline write queue or automatic legacy migration. Use **Refresh projects**
+for changes made in another tab; realtime sync is not implemented.
+
+Tags, linked documentation, folders, global search and cloud backups are not
+integrated yet. The board hides tag filters; the task dialog and Documentation
+view explain the limitation. Existing task_notes/task_tags/note_tags rows are
+never read, reset or replaced by edits. The legacy workspace retains its full
+features and storage format for the explicit migration iteration.
+
+### Database setup and diagnostics
+
+Use the existing URL/publishable-key setup above. The database must supply UUIDs,
+timestamps, updated_at behavior and the project owner default. Missing columns,
+missing ownership defaults, validation errors, blocked relationships and denied
+operations are displayed with safe, actionable messages. No live schema mismatch
+was established by the mocked tests, and no SQL has been executed.
+
+If project creation specifically reports PostgreSQL `23502` for `user_id`, ask
+the database administrator to verify the column default. The following is the
+recommended change **only if that default is missing**, for manual review/execution:
+
+```sql
+alter table public.projects alter column user_id set default auth.uid();
+```
+
+This does not replace an INSERT policy enforcing `user_id = auth.uid()`. Do not
+disable RLS or add broad allow policies to make a failed request succeed. For
+permission/foreign-key errors, inspect the reported operation/table and existing
+grants, policies or constraints before deciding on a targeted SQL correction.
+
+### Cloud verification
+
+Automated tests use a fluent Supabase test double and the production React entry.
+They cover project/task CRUD, task notes/statuses, both movement directions,
+drag events, server-field mapping, paged reads, whitelist protection, empty states,
+denied operations, ownership checks, network/schema errors, retry, persistence
+across component remounts, stale reads, in-flight logout and account separation.
+They assert that legacy storage remains byte-for-byte unchanged. The harness
+disables `.env.local` loading, so tests never initialize a real configured client.
+The mock's RLS-shaped behavior is not proof of your deployed policies.
+
+Manual checks with the real database and two separate test accounts are required:
+
+1. As account A, create a project and tasks, edit all supported fields, move tasks
+   using buttons and pointer dragging, refresh, sign out and back in. Confirm the
+   server records persist and timestamps behave as intended.
+2. In a separate browser profile, sign in as B. A's project and task IDs must be
+   absent from B's SELECT results. Using B's regular publishable-key/Auth client,
+   directly attempt UPDATE/DELETE against A's project, task INSERT with A's
+   project_id, and task UPDATE/DELETE against A's task. Require an error or zero
+   affected rows; verify A's records remain unchanged. Also test a direct project
+   INSERT/UPDATE specifying A's user_id to confirm server policies prevent spoofing.
+   Test fixtures should be disposable; the normal UI does not expose these fields.
+3. With a signed-out publishable client, attempt SELECT/INSERT/UPDATE/DELETE on
+   both tables. Private rows must remain unreadable and unwritable. Dashboard SQL
+   executed as postgres/service_role is not a valid RLS test.
+4. As A, delete a disposable project with tasks and an existing linked cloud note.
+   Confirm task cascade, note preservation/project_id NULL and intended junction
+   cleanup. The UI intentionally cannot create note/tag relationships yet.
+5. Interrupt a request, retry loading, and sign out/switch accounts during a load.
+   Check that no previous account or legacy browser content appears. Compare
+   existing localStorage data before and after, without clearing browser storage.
+6. Check mobile navigation/stacked columns, keyboard dialogs and native pointer
+   dragging in an actual browser; jsdom only verifies the React drag handlers.
 
 ## Projects and tasks (preserved local workspace)
 

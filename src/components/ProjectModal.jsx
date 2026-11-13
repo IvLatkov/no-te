@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Modal from './Modal'
 
-export default function ProjectModal({ project, onSave, onClose, error }) {
+export default function ProjectModal({ project, onSave, onClose, error, busy = false }) {
   const [name, setName] = useState(project?.name ?? '')
   const [description, setDescription] = useState(project?.description ?? '')
   return (
@@ -9,12 +9,13 @@ export default function ProjectModal({ project, onSave, onClose, error }) {
       <form
         onSubmit={(event) => {
           event.preventDefault()
-          if (name.trim()) onSave({ name: name.trim(), description: description.trim() })
+          if (!busy && name.trim()) onSave({ name: name.trim(), description: description.trim() })
         }}
       >
         <label htmlFor="project-name">Project name</label>
         <input
           id="project-name"
+          disabled={busy}
           autoFocus
           required
           maxLength={100}
@@ -27,6 +28,7 @@ export default function ProjectModal({ project, onSave, onClose, error }) {
         </label>
         <textarea
           id="project-description"
+          disabled={busy}
           rows={4}
           maxLength={2000}
           value={description}
@@ -34,11 +36,11 @@ export default function ProjectModal({ project, onSave, onClose, error }) {
           placeholder="What are you working on?"
         />
         <div className="modal-actions">
-          <button type="button" className="button secondary" onClick={onClose}>
+          <button type="button" className="button secondary" disabled={busy} onClick={onClose}>
             Cancel
           </button>
-          <button className="button primary" disabled={!name.trim()}>
-            {project ? 'Save project' : 'Create project'}
+          <button className="button primary" disabled={busy || !name.trim()}>
+            {busy ? 'Saving…' : project ? 'Save project' : 'Create project'}
           </button>
         </div>
       </form>
