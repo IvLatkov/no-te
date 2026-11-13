@@ -11,7 +11,72 @@ npm run build
 npm test
 ```
 
-## Projects and tasks
+## Supabase authentication — iteration 6.3A
+
+The production entry now requires a Supabase email/password session. Copy
+`.env.example` to `.env.local` and set `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_PUBLISHABLE_KEY` using your project URL and **publishable**
+(`sb_publishable_...`) API key. Restart Vite after environment changes.
+`.env.local` is Git-ignored. Never put secret/service-role keys or database
+credentials in any Vite environment variable; Vite's public variables are bundled
+into the frontend. Production hosting needs the same public variables at build time.
+
+Create/confirm the private account through your Supabase dashboard. No registration,
+password reset, or account creation UI is provided. If you want registration
+disabled at the service level too, verify that setting in Supabase Auth; hiding
+registration in the UI alone does not change server settings. This iteration does
+not change your database, policies, triggers, or Auth dashboard configuration.
+
+The client persists and refreshes Auth sessions using Supabase's own storage key.
+The centralized AuthProvider restores sessions and verifies identity using
+`auth.getUser()` before rendering the account shell. Auth events, account switches,
+logout, and token expiry hide or reset account UI. Signing out affects the current
+browser session (`scope: 'local'`); it does not clear legacy No-Te storage or sign
+out other devices. Network errors are shown with retry options.
+
+Settings shows the signed-in email. **Test connection** calls Auth `getUser()` and
+then performs `schema('public').from('projects').select('id').limit(1)`. Empty
+results still show **Connected**. Authentication, network, permission, configuration,
+and other request failures receive safe messages without raw server details or
+tokens. A successful empty result proves the API request succeeded, not that RLS
+would allow every row; RLS can legitimately filter all rows.
+
+### Legacy data quarantine
+
+Existing projects, tasks, notes, folders, tags, relationships, and backups are
+local-only, with no verified account owner. They must not become visible to the
+next account that signs in on this browser. Consequently, the production account
+shell does **not** mount any legacy data hooks, searches, editors, or backup tools.
+Projects and Documentation display a quarantine notice instead of browser records.
+There is no remote CRUD, data upload, merge, ownership assignment, or storage reset.
+
+The former App implementation is preserved unchanged as `src/LocalWorkspace.jsx`,
+along with all storage utilities, board/editor components and backup features.
+It is not reachable through a production route or opt-out flag. Its existing
+regression tests continue to run against that component. Reconnecting these
+features to account data, including safe backup access, requires the deliberate
+migration/data-layer iteration. The following earlier feature documentation
+describes this retained local workspace, not currently available account features.
+
+### Verification for authentication
+
+`npm test` includes mocked Supabase UI tests for login errors, successful login,
+session remount restoration, logout and logout failure, account switching,
+expiration, missing configuration, connection failures, zero-row SELECT success,
+and exact legacy-storage preservation. These tests do not contact a real project.
+
+Manual checks with your real Supabase project are still required:
+
+- Sign in with the private account; try incorrect credentials and an offline request.
+- Refresh and reopen the browser to verify actual SDK token persistence/refresh.
+- Open Settings, confirm your email, and test an empty `public.projects` table.
+- Verify the real project's grants/RLS permit the intended SELECT; zero rows can
+  also mean RLS filtered them. Do not insert test records just for this check.
+- Test network/permission failures, retry, sign out, expired sessions, and another
+  account in the same browser. No legacy titles or content should appear.
+- Check desktop/mobile navigation, keyboard focus, login form and Settings layout.
+
+## Projects and tasks (preserved local workspace)
 
 Open **Projects** to create a project with a name and optional description. Project
 cards and **YOUR PROJECTS** in the sidebar open the project's board. Use the edit

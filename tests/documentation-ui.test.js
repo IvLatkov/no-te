@@ -26,7 +26,8 @@ test('documentation UI integrates CRUD, editor toolbar, checklists, navigation s
   const server = await createServer({ cacheDir: 'node_modules/.vite/test-documentation-ui', server: { middlewareMode: true, watch: null, hmr: false, ws: false }, appType: 'custom', logLevel: 'error', optimizeDeps: { noDiscovery: true } })
   let root
   try {
-    const { default: App } = await server.ssrLoadModule('/src/App.jsx')
+    // Keep editor regression coverage against the quarantined legacy workspace.
+    const { default: App } = await server.ssrLoadModule('/src/LocalWorkspace.jsx')
     const React = await import('react')
     const project = createProject({ name: 'Release plan', description: 'Project documentation' })
     const untouched = createProject({ name: 'Keep this project' })

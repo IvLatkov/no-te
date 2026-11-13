@@ -2,7 +2,9 @@ import assert from 'node:assert/strict'
 import { JSDOM } from 'jsdom'
 import { createServer } from 'vite'
 
-export async function uiHarness(cacheName = 'test-task-documentation-ui') {
+export async function uiHarness(cacheName = 'test-task-documentation-ui', { module = '/src/LocalWorkspace.jsx', props = {} } = {}) {
+  // Legacy regression suites deliberately exercise the preserved offline workspace.
+  // Auth integration suites explicitly load the production /src/App.jsx entry.
   const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', { url: 'http://localhost/', pretendToBeVisual: true })
   for (const name of ['window', 'document', 'navigator', 'HTMLElement', 'HTMLInputElement', 'HTMLTextAreaElement', 'HTMLDialogElement', 'Element', 'Node', 'Text', 'DocumentFragment', 'MutationObserver', 'DOMParser', 'Event', 'MouseEvent', 'KeyboardEvent', 'FileReader', 'localStorage', 'getComputedStyle']) {
     Object.defineProperty(globalThis, name, { configurable: true, value: name === 'getComputedStyle' ? dom.window[name].bind(dom.window) : dom.window[name] })
@@ -20,14 +22,14 @@ export async function uiHarness(cacheName = 'test-task-documentation-ui') {
   const { createRoot } = await import('react-dom/client')
   const { act } = React
   const server = await createServer({ cacheDir: `node_modules/.vite/${cacheName}`, server: { middlewareMode: true, watch: null, hmr: false, ws: false }, appType: 'custom', logLevel: 'error', optimizeDeps: { noDiscovery: true } })
-  const { default: App } = await server.ssrLoadModule('/src/App.jsx')
+  const { default: App } = await server.ssrLoadModule(module)
   let root
   return {
     dom, act,
     async mount() {
       if (root) await act(async () => root.unmount())
       root = createRoot(document.getElementById('root'))
-      await act(async () => root.render(React.createElement(App)))
+      await act(async () => root.render(React.createElement(App, props)))
     },
     byText(text, scope = document) {
       const element = [...scope.querySelectorAll('button')].find(button => button.textContent.trim() === text)
