@@ -50,6 +50,8 @@ export function createCloudDocumentationStore(client, userId, { delay = 500 } = 
   }
   async function load() {
     if (!active) return false
+    if (draining && !(await draining)) return false
+    if (!active) return false
     const version = epoch
     const request = ++loadVersion
     const opt = options()
@@ -104,7 +106,7 @@ export function createCloudDocumentationStore(client, userId, { delay = 500 } = 
     dirty.set(id, { patch: structuredClone(patch) })
     publish({
       notes: snapshot.notes.map((note) => (note.id === id ? { ...note, ...changes } : note)),
-      status: 'saving',
+      status: draining ? 'saving' : 'unsaved',
       error: '',
     })
     clearTimeout(timer)
@@ -121,6 +123,9 @@ export function createCloudDocumentationStore(client, userId, { delay = 500 } = 
     if (snapshot.readOnly) return Promise.resolve(false)
     const version = epoch
     const opt = options()
+    // A read started before this write cannot replace its acknowledged result.
+    ++loadVersion
+    publish({ status: 'saving', error: '', loading: false })
     draining = (async () => {
       try {
         while (dirty.size && current(version)) {

@@ -2,6 +2,24 @@
 
 A minimalist React + Vite workspace for project notes and tasks.
 
+## Current status: 6.4.1 frontend
+
+Cloud export/read-only preview, save-lifecycle improvements and the Tiptap editor
+startup fix are included. All 111 application tests passed, along with lint/build
+and single-account browser verification. See [release notes](docs/release-6.4.1.md).
+Database SQL and private rollout evidence are outside this code-only upload.
+No public website deployment has been performed.
+
+## Current iteration: 6.4
+
+Cloud export and read-only backup preview are available in authenticated Settings.
+No cloud restore or localStorage migration is implemented or needed. See the
+[production readiness report and manual verification checklist](docs/release-6.4.1.md)
+for current behavior, security findings, remaining risks, SQL inspection queries,
+two-account RLS testing and static hosting requirements. This section and the linked
+report supersede older statements below about deferred cloud backup/migration or
+project deletion relying only on foreign keys. No deployment has been performed.
+
 ## Development
 
 ```sh

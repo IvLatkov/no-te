@@ -55,6 +55,8 @@ export async function requireCloudUser(client, expectedUserId, signal) {
     checkAbort(signal)
     if (session.error) throw session.error
     if (!session.data?.session?.access_token) throw { status: 401 }
+    if (session.data.session.expires_at && session.data.session.expires_at * 1000 <= Date.now())
+      throw { status: 401 }
     if (session.data.session.user.id !== expectedUserId) throw { code: 'ACCOUNT_CHANGED' }
     const token = session.data.session.access_token
     response = await client.auth.getUser(token)
@@ -95,8 +97,9 @@ export async function cloudResult(query, signal, entity, operation, requireRow =
 }
 
 // Honor API row caps instead of silently presenting the first page as all data.
-export async function cloudRows(makeQuery, signal, entity) {
+export async function cloudRows(makeQuery, signal, entity, { requireExactCount = false, onPage = () => {} } = {}) {
   const rows = []
+  let expectedCount
   while (true) {
     const result = await cloudResponse(
       makeQuery().range(rows.length, rows.length + 499),
@@ -105,7 +108,17 @@ export async function cloudRows(makeQuery, signal, entity) {
       'SELECT',
     )
     const page = result.data ?? []
+    if (requireExactCount) {
+      if (!Array.isArray(result.data) || !Number.isSafeInteger(result.count) || result.count < 0)
+        throw new Error(`Could not verify all public.${entity} records. No backup was produced.`)
+      if (expectedCount !== undefined && expectedCount !== result.count)
+        throw new Error(`public.${entity} changed during export. Pause other edits and retry.`)
+      expectedCount = result.count
+      if (rows.length + page.length > expectedCount)
+        throw new Error(`Invalid pagination for public.${entity}. No backup was produced.`)
+    }
     rows.push(...page)
+    onPage(rows.length, result.count)
     if (result.count != null ? rows.length >= result.count : page.length < 500) return rows
     if (!page.length)
       throw new Error(`Could not load all public.${entity} records. Reload before editing.`)

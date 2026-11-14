@@ -334,7 +334,7 @@ export default function AuthenticatedWorkspace() {
       {modal?.type === 'deleteProject' && (
         <ConfirmModal
           title="Delete project?"
-          message={`Delete “${modal.project.name}” and all of its tasks? Notes are preserved through the configured project foreign key. This cannot be undone.`}
+          message={`Delete “${modal.project.name}” and all of its tasks? Its notes will become unassigned and Unfiled; its folders will become general folders. This cannot be undone. Avoid editing this project in other tabs during deletion.`}
           onConfirm={deleteItem}
           onClose={closeModal}
           error={mutationError || error}

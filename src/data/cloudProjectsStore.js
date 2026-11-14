@@ -21,8 +21,8 @@ export function createCloudProjectsStore(client, userId) {
     controllers.add(value)
     return value
   }
-  async function load() {
-    if (mutationLocked) return false
+  async function load({ afterMutation = false } = {}) {
+    if (mutationLocked && !afterMutation) return false
     active = true
     const version = ++revision
     const request = controller()
@@ -64,16 +64,17 @@ export function createCloudProjectsStore(client, userId) {
       publish({ projects: apply(snapshot.projects, result) })
       // Refresh from PostgreSQL after a confirmed write. A failed refresh does
       // not turn a successful INSERT into a retryable INSERT (duplicate risk).
-      mutationLocked = false
-      const refreshed = await load()
+      const refreshed = await load({ afterMutation: true })
       if (active && !refreshed && snapshot.error)
         publish({ error: `Saved, but refresh failed. ${snapshot.error}` })
       return active
     } catch (failure) {
-      if (active && version === revision && failure.name !== 'AbortError')
+      if (active && version === revision && failure.name !== 'AbortError') {
+        await load({ afterMutation: true })
         publish({
           mutationError: `${failure.message} If the connection was interrupted, reload before retrying to check whether the change completed.`,
         })
+      }
       return false
     } finally {
       controllers.delete(request)

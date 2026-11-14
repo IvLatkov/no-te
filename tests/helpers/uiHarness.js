@@ -4,7 +4,7 @@ import { createServer } from 'vite'
 
 export async function uiHarness(
   cacheName = 'test-task-documentation-ui',
-  { module = '/src/LocalWorkspace.jsx', props = {}, onRender } = {},
+  { module = '/src/LocalWorkspace.jsx', props = {}, onRender, strictMode = false } = {},
 ) {
   // Legacy regression suites deliberately exercise the preserved offline workspace.
   // Auth integration suites explicitly load the production /src/App.jsx entry.
@@ -86,7 +86,9 @@ export async function uiHarness(
                 { id: 'test-workspace', onRender },
                 React.createElement(App, props),
               )
-            : React.createElement(App, props),
+            : strictMode
+              ? React.createElement(React.StrictMode, null, React.createElement(App, props))
+              : React.createElement(App, props),
         ),
       )
     },

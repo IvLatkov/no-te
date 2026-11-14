@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from './useAuth'
 import { testDatabaseConnection } from '../lib/connectionTest'
+import CloudBackupSettings from '../components/CloudBackupSettings'
 
 export default function AccountSettings({ beforeSignOut }) {
   const { client, user, signOut } = useAuth()
@@ -8,6 +9,7 @@ export default function AccountSettings({ beforeSignOut }) {
   const [checking, setChecking] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
   const [error, setError] = useState('')
+  const [backupBusy, setBackupBusy] = useState(false)
   const generation = useRef(0)
   useEffect(
     () => () => {
@@ -28,6 +30,7 @@ export default function AccountSettings({ beforeSignOut }) {
   }
 
   async function logout() {
+    if (signingOut || backupBusy) return
     setSigningOut(true)
     setError('')
     if (beforeSignOut && !(await beforeSignOut())) {
@@ -57,7 +60,7 @@ export default function AccountSettings({ beforeSignOut }) {
           <h2 id="account-heading">Account</h2>
           <p className="account-email">{user.email}</p>
         </div>
-        <button type="button" className="button secondary" disabled={signingOut} onClick={logout}>
+        <button type="button" className="button secondary" disabled={signingOut || backupBusy} onClick={logout}>
           {signingOut ? 'Signing out…' : 'Sign out'}
         </button>
       </section>
@@ -97,13 +100,14 @@ export default function AccountSettings({ beforeSignOut }) {
           </p>
         )}
       </div>
+      <CloudBackupSettings client={client} userId={user.id} beforeExport={beforeSignOut} disabled={signingOut} onBusyChange={setBackupBusy} />
       <section className="local-quarantine" aria-labelledby="legacy-heading">
         <h2 id="legacy-heading">Local-only browser content</h2>
         <p>
           Existing projects, tasks, documentation, folders, tags, links, and backups remain in this
           browser. They are quarantined and are not assigned to this account, displayed, uploaded,
-          or reset. The local workspace and its backup tools are retained in the codebase and will
-          be reconnected through an explicit migration in a later iteration.
+          or reset. The local workspace and its backup tools are preserved separately. No browser
+          data migration is needed for this fresh cloud workspace.
         </p>
       </section>
     </section>

@@ -122,7 +122,8 @@ test('cloud folder depth, compatibility, rename and subtree deletion relocate no
   assert.equal(db.notes.length, 1)
   assert.ok(!db.calls.some((call) => call.table === 'notes' && call.op === 'delete'))
   db.failure = (call) => (call.table === 'notes' && call.op === 'update' ? { code: 'P0001' } : null)
-  await assert.rejects(api.updateNote(note.id, { folderId: 'bad' }), /Folder validation rejected/)
+  await assert.rejects(api.updateNote(note.id, { folderId: 'bad' }), /folder is unavailable/)
+  await assert.rejects(api.updateNote(note.id, { title: 'Valid' }), /Folder validation rejected/)
 })
 
 test('multiple cloud tags and task-note relationships are idempotent, bidirectional, searchable and RLS scoped', async () => {

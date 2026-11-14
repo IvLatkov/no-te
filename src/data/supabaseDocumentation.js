@@ -50,9 +50,10 @@ export function createDocumentationApi(client = supabase, userId) {
     return rows.map((row) => model(name, row))
   }
   async function owned(name, id, signal) {
-    let query = table(name).select('id').eq('id', id)
+    let query = table(name).select(name === 'tasks' ? 'id,project_id' : 'id').eq('id', id)
     if (name !== 'tasks') query = query.eq('user_id', userId)
-    await cloudResult(query.single(), signal, name, 'SELECT', true)
+    const row = await cloudResult(query.single(), signal, name, 'SELECT', true)
+    if (name === 'tasks') await owned('projects', row.project_id, signal)
   }
   function notePatch(input) {
     const patch = {}
@@ -127,6 +128,12 @@ export function createDocumentationApi(client = supabase, userId) {
     async updateNote(id, input, { signal = new AbortController().signal } = {}) {
       await authorize(signal)
       const patch = notePatch(input)
+      if ('projectId' in input || 'folderId' in input) {
+        const previous = await cloudResult(table('notes').select(fields.notes).eq('id', id).eq('user_id', userId).single(), signal, 'notes', 'SELECT', true)
+        const next = { ...model('notes', previous), ...input }
+        if (next.projectId) await owned('projects', next.projectId, signal)
+        validateNoteFolder(next, next.folderId ? await api.fetchFolders({ signal }) : [])
+      }
       return model(
         'notes',
         await cloudResult(
@@ -167,9 +174,17 @@ export function createDocumentationApi(client = supabase, userId) {
             ? input.parentFolderId || null
             : (previous?.parentFolderId ?? null),
       }
-      validateFolders(
-        previous ? folders.map((folder) => (folder.id === id ? next : folder)) : [...folders, next],
-      )
+      const nextFolders = previous
+        ? folders.map((folder) => (folder.id === id ? next : folder))
+        : [...folders, next]
+      validateFolders(nextFolders)
+      // A folder's project change must not invalidate notes already inside it.
+      // Child folders are checked above, including the depth of the whole subtree.
+      if (previous && previous.projectId !== next.projectId) {
+        const notes = await api.fetchNotes({ signal })
+        for (const note of notes.filter((item) => item.folderId === id))
+          validateNoteFolder(note, nextFolders)
+      }
       if (next.projectId) await owned('projects', next.projectId, signal)
       const values = {
         name: next.name,

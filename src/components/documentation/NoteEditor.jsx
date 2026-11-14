@@ -61,10 +61,15 @@ export default function NoteEditor({
     },
   })
   useEffect(() => {
-    editor?.setEditable(!readOnly && !displayContentError, false)
+    if (editor && !editor.isDestroyed) {
+      editor.setEditable(!readOnly && !displayContentError, false)
+    }
   }, [editor, readOnly, displayContentError])
   useEffect(() => {
-    if (!editor || !supported || invalid.current) return
+    // useEditor replaces disposed render-time instances in its own effect. This
+    // render can still reference the old instance, whose schema is now null.
+    // Wait for the replacement instead of treating its lifecycle as bad content.
+    if (!editor || editor.isDestroyed || !supported || invalid.current) return
     try {
       // JSONB can reorder object keys. Replacing an equivalent document resets
       // the selection/history; compare ProseMirror nodes rather than JSON text.
@@ -94,7 +99,7 @@ export default function NoteEditor({
           ) : (
             <Check size={13} />
           )}
-          {status === 'saving' ? 'Saving…' : status === 'error' ? 'Not saved' : 'Saved'}
+          {status === 'saving' ? 'Saving…' : status === 'error' ? 'Save failed' : status === 'unsaved' ? 'Unsaved changes' : 'Saved'}
         </span>
         <div className="card-actions">
           <button

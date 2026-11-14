@@ -26,3 +26,8 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Supabase CLI machine-local state (migrations/review SQL remain versioned)
+supabase/.temp/
+supabase/.branches/
+.supabase/

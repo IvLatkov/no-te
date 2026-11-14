@@ -63,7 +63,7 @@ test('cloud project/task CRUD uses server records, explicit fields and cascade w
   assert.equal(db.projects.length, 0)
   assert.equal(db.tasks.length, 0)
   assert.deepEqual(
-    db.calls.map((call) => [call.table, call.op]),
+    db.calls.filter((call) => call.op === 'delete').map((call) => [call.table, call.op]),
     [['projects', 'delete']],
   )
 })

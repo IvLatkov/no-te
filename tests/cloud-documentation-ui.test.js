@@ -56,7 +56,7 @@ test('cloud documentation preserves Tiptap formatting, autosave retry, folders, 
     db.failure = (call) =>
       call.table === 'notes' && call.op === 'update' ? new TypeError('Failed to fetch') : null
     await ui.input(document.querySelector('.note-title'), 'Unsaved cloud title')
-    await ui.waitFor(() => document.querySelector('.save-status')?.textContent === 'Not saved')
+    await ui.waitFor(() => document.querySelector('.save-status')?.textContent === 'Save failed')
     await ui.click(document.querySelectorAll('.primary-nav button')[0])
     assert.ok(document.querySelector('.note-editor'))
     assert.equal(document.querySelector('.note-title').value, 'Unsaved cloud title')
