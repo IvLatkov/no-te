@@ -146,7 +146,7 @@ export default function GlobalSearch({
                           {type === 'Documentation'
                             ? 'Note'
                             : type === 'Tasks'
-                              ? 'Task'
+                              ? result.archived ? 'Archived task' : 'Task'
                               : type === 'Tags'
                                 ? 'Tag'
                                 : 'Project'}

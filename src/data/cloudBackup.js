@@ -7,7 +7,7 @@ export const CLOUD_BACKUP_MAX_BYTES = 100 * 1024 * 1024
 // Explicit column lists keep Auth/session data and unexpected columns out of files.
 export const CLOUD_BACKUP_FIELDS = {
   projects: 'id,user_id,name,description,created_at,updated_at',
-  tasks: 'id,project_id,title,description,status,implementation_notes,created_at,updated_at',
+  tasks: 'id,project_id,title,description,status,implementation_notes,created_at,updated_at,completed_at,archive_grace_started_at,archives_at',
   notes: 'id,user_id,project_id,folder_id,title,content,created_at,updated_at',
   folders: 'id,user_id,project_id,parent_folder_id,name,created_at,updated_at',
   tags: 'id,user_id,name,color,created_at,updated_at',
@@ -19,6 +19,7 @@ const owned = ['projects', 'notes', 'folders', 'tags']
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value)
 const id = (value) => typeof value === 'string' && value.trim().length > 0
 const date = (value) => typeof value === 'string' && /^\d{4}-\d\d-\d\dT/.test(value) && Number.isFinite(Date.parse(value))
+const completionFields = ['completed_at', 'archive_grace_started_at', 'archives_at']
 function ensure(ok, message) {
   if (!ok) throw new Error(`Invalid cloud backup: ${message}`)
 }
@@ -41,7 +42,7 @@ export function validateCloudBackup(backup, expectedUserId) {
     const seen = new Set()
     for (const row of data[table]) {
       keys(row, fields.split(','), table)
-      ensure(fields.split(',').every((field) => Object.hasOwn(row, field)), `${table} has missing fields.`)
+      ensure(fields.split(',').filter((field) => table !== 'tasks' || !completionFields.includes(field)).every((field) => Object.hasOwn(row, field)), `${table} has missing fields.`)
       ensure(date(row.created_at), `${table} has an invalid created_at.`)
       if ('updated_at' in row) ensure(date(row.updated_at), `${table} has an invalid updated_at.`)
       if (owned.includes(table)) ensure(row.user_id === backup.ownerId, `${table} has a different owner.`)
@@ -54,6 +55,14 @@ export function validateCloudBackup(backup, expectedUserId) {
       if ('name' in row) ensure(typeof row.name === 'string' && row.name.trim(), `${table} has an invalid name.`)
       if ('description' in row) ensure(row.description === null || typeof row.description === 'string', `${table} has invalid description.`)
       if (table === 'tasks') ensure(['todo', 'done'].includes(row.status) && (row.implementation_notes === null || typeof row.implementation_notes === 'string'), 'invalid task values.')
+      if (table === 'tasks') {
+        for (const field of completionFields) ensure(row[field] == null || date(row[field]), `invalid ${field}.`)
+        if (completionFields.some((field) => row[field] != null)) {
+          ensure(row.status === 'done' && date(row.archives_at), 'completion metadata requires a Done task and archive deadline.')
+          ensure(Boolean(row.completed_at) !== Boolean(row.archive_grace_started_at), 'completion and historical grace must be distinct.')
+          ensure(Date.parse(row.archives_at) - Date.parse(row.completed_at || row.archive_grace_started_at) === 168 * 3600000, 'archive deadline must be seven elapsed days after completion or grace.')
+        }
+      }
       if (table === 'tags') ensure(typeof row.color === 'string' && /^#[0-9a-f]{6}$/i.test(row.color), 'invalid tag color.')
       if (table === 'notes') {
         ensure(object(row.content) && row.content.type === 'doc' && Array.isArray(row.content.content), 'invalid Tiptap JSON.')

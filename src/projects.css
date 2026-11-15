@@ -458,3 +458,52 @@ button:disabled {
     padding: 22px;
   }
 }
+
+/* Archive keeps the task and its relationships; only the active board changes. */
+.archive-countdown {
+  display: block;
+  margin: 6px 0;
+  color: var(--accent-text);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.task-card > .archive-countdown {
+  margin: 0 14px 10px;
+}
+.task-archive-modal {
+  width: min(650px, calc(100% - 24px));
+}
+.archive-task-list {
+  display: grid;
+  gap: 12px;
+  max-height: 55svh;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.archive-task-list li {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.archive-task-open {
+  display: grid;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.archive-task-open span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.archive-task-list .text-action {
+  justify-self: start;
+}

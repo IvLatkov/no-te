@@ -22,7 +22,7 @@ export default function LinkedTasks({ tasks, onOpenTask }) {
               <span>
                 <strong>{task.title}</strong>
                 <small>
-                  {task.projectName} · {task.status === 'done' ? 'Done' : 'To Do'}
+                  {task.projectName} · {task.isArchived ? 'Archived' : task.status === 'done' ? 'Done' : 'To Do'}
                 </small>
               </span>
               <ArrowUpRight size={14} />

@@ -1,5 +1,6 @@
 import { ArrowLeft, ArrowRight, Pencil, Trash2 } from 'lucide-react'
 import { TagBadges } from './TagSelector'
+import { archiveLabel } from '../data/taskWorkflow'
 
 export default function TaskCard({
   task,
@@ -37,6 +38,7 @@ export default function TaskCard({
         <h3>{task.title}</h3>
         {task.description && <p>{task.description}</p>}
       </button>
+      {done && <small className="archive-countdown">{archiveLabel(task)}</small>}
       <TagBadges tags={tags} value={task.tagIds || []} limit={2} />
       <div className="task-actions">
         <button

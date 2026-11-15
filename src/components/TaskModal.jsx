@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Modal from './Modal'
+import { archiveLabel, isArchivedTask } from '../data/taskWorkflow'
 
 export default function TaskModal({
   task,
@@ -52,6 +53,12 @@ export default function TaskModal({
         />
         {details && (
           <>
+            {task?.status === 'done' && <p className="archive-countdown">{archiveLabel(task)}{task.archiveGraceStartedAt ? ' · Historical completion unknown; migration grace period.' : ''}</p>}
+            {isArchivedTask(task) && (
+              <button type="button" className="button secondary" disabled={busy} onClick={() => {
+                onSave({ title: title.trim(), description, implementationNotes, status: 'todo' })
+              }}>Restore to To Do</button>
+            )}
             <label htmlFor="cloud-task-status">Status</label>
             <select
               id="cloud-task-status"
@@ -71,9 +78,9 @@ export default function TaskModal({
               onChange={(event) => setImplementationNotes(event.target.value)}
             />
             <div className="task-detail-timestamps">
-              {['createdAt', 'updatedAt'].map((field) => (
+              {['createdAt', 'updatedAt', ...(task?.completedAt ? ['completedAt'] : [])].map((field) => (
                 <span key={field}>
-                  {field === 'createdAt' ? 'Created ' : 'Updated '}
+                  {field === 'createdAt' ? 'Created ' : field === 'completedAt' ? 'Completed ' : 'Updated '}
                   <time dateTime={task?.[field] || undefined}>
                     {task?.[field] ? new Date(task[field]).toLocaleString() : 'Not recorded'}
                   </time>

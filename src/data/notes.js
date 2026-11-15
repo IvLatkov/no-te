@@ -45,9 +45,9 @@ export function noteText(node) {
   return (Array.isArray(node.content) ? node.content : []).map(noteText).join(separator)
 }
 
-export function selectNotes(notes, { query = '', projectId = 'all', folderId = 'all', tagIds = [], sort = 'modified' } = {}) {
+export function selectNotes(notes, { query = '', projectId = 'all', folderId = 'all', tagIds = [], sort = 'modified', projectNoteIds = [] } = {}) {
   const term = query.trim().toLocaleLowerCase()
-  return notes.filter(note => (projectId === 'all' || note.projectId === projectId) &&
+  return notes.filter(note => (projectId === 'all' || note.projectId === projectId || projectNoteIds.includes(note.id)) &&
     (folderId === 'all' || (note.folderId || null) === folderId) && tagIds.every(id => (note.tagIds || []).includes(id)) &&
     (!term || `${note.title}\n${noteText(note.content)}`.toLocaleLowerCase().includes(term)))
     .sort((a, b) => sort === 'title'

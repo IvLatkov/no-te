@@ -1,4 +1,5 @@
 import { describeSupabaseError } from '../lib/supabaseErrors.js'
+import { TASK_WORKFLOW_SETUP } from './taskWorkflow.js'
 
 // Pin each operation to the token whose identity was verified, so an SDK account
 // switch cannot send an old form's INSERT using the next account's credentials.
@@ -16,7 +17,9 @@ export function cloudError(failure, entity, operation) {
   ) {
     message = `Creation requires a database-supplied owner. public.${entity}.user_id has no usable auth.uid() default. No client-selected owner was sent.`
   } else if (['42P01', '42703', 'PGRST204', 'PGRST205'].includes(code)) {
-    message = `Schema mismatch for public.${entity}. Check the documented columns and the API schema cache (${code}).`
+    message = ['tasks', 'task_workflow'].includes(entity)
+      ? `${TASK_WORKFLOW_SETUP} Schema mismatch (${code}).`
+      : `Schema mismatch for public.${entity}. Check the documented columns and the API schema cache (${code}).`
   } else if (code === '42501' || failure?.status === 403) {
     message = `Permission denied for ${operation} on public.${entity}. Check the authenticated role grants and RLS policies; they have not been changed.`
   } else if (code === 'PGRST116') {

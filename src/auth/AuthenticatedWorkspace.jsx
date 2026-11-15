@@ -181,6 +181,7 @@ export default function AuthenticatedWorkspace() {
         notesState={notesState}
         projects={projects}
         onOpenTask={openTask}
+        taskLinksAvailable={!loading && !error && !notesState.loadError}
         organization={organization}
       />
     </Deferred>
@@ -272,6 +273,8 @@ export default function AuthenticatedWorkspace() {
               onOpenProject={openProject}
               onOpenTask={openDashboardTask}
               onOpenNote={openDashboardNote}
+              onRestoreTask={(id, taskId) => run(() => store.moveTask(id, taskId, 'todo'))}
+              readOnly={readOnly}
             />
           ) : activePage === 'documentation' ? (
             documentation()

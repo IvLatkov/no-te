@@ -16,7 +16,7 @@ test('legacy tasks load with additive defaults without inventing timestamps or r
   const raw = JSON.stringify([project])
   storage.setItem(STORAGE_KEY, raw)
   const loaded = loadProjects(storage)
-  assert.deepEqual(loaded[0].tasks[0], { ...oldTask, linkedNoteIds: [], tagIds: [], implementationNotes: '', createdAt: null, updatedAt: null })
+  assert.deepEqual(loaded[0].tasks[0], { ...oldTask, linkedNoteIds: [], tagIds: [], implementationNotes: '', createdAt: null, updatedAt: null, completedAt: null, archiveGraceStartedAt: null, archivesAt: null, isArchived: false })
   assert.equal(storage.getItem(STORAGE_KEY), raw, 'reading does not rewrite storage')
   const malformed = normalizeTask({ ...oldTask, implementationNotes: 10, linkedNoteIds: ['a', 'a', 2, null], createdAt: 'not a date' })
   assert.deepEqual(malformed.linkedNoteIds, ['a'])

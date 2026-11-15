@@ -5,7 +5,7 @@ import NotesList from './NotesList'
 import NoteEditor from './NoteEditor'
 import NoteModal from './NoteModal'
 import ConfirmModal from '../ConfirmModal'
-import { tasksForNote } from '../../data/taskDocumentation'
+import { tasksForNote, filterDocumentation } from '../../data/taskDocumentation'
 import FolderTree from './FolderTree'
 import FolderModal from './FolderModal'
 import TagSelector from '../TagSelector'
@@ -21,12 +21,14 @@ export default function DocumentationWorkspace({
   organization,
   singleNote = false,
   onExit,
+  taskLinksAvailable = true,
 }) {
   const { notes, store, status, error, readOnly, busy = false } = notesState
   const [selectedId, setSelectedId] = useState(initialNoteId)
   const [filter, setFilter] = useState(projectScope || 'all')
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState('modified')
+  const [linkFilter, setLinkFilter] = useState('all')
   const [modal, setModal] = useState(null)
   const [folderId, setFolderId] = useState('all')
   const [tagIds, setTagIds] = useState([])
@@ -40,13 +42,14 @@ export default function DocumentationWorkspace({
   })
   const selected = notes.find((note) => note.id === selectedId)
   const activeTags = tagIds.filter((id) => organization.tags.some((tag) => tag.id === id))
-  const visible = selectNotes(notes, {
+  const visible = filterDocumentation(selectNotes(notes, {
     query,
     projectId: projectScope || filter,
     folderId,
     tagIds: activeTags,
     sort,
-  })
+    projectNoteIds: projects.find((project) => project.id === (projectScope || filter))?.tasks.flatMap((task) => task.linkedNoteIds || []) || [],
+  }), projects, taskLinksAvailable ? linkFilter : 'all')
   const filteredProject = projectScope || filter
   const visibleFolders = useMemo(
     () =>
@@ -140,10 +143,13 @@ export default function DocumentationWorkspace({
         onQuery={setQuery}
         sort={sort}
         onSort={setSort}
+        linkFilter={linkFilter}
+        taskLinksAvailable={taskLinksAvailable}
+        onLinkFilter={async (value) => { if (await store.flush()) setLinkFilter(value) }}
         projectScope={projectScope}
         readOnly={readOnly}
         noteDrag={noteDrag}
-        hasFilters={folderId !== 'all' || activeTags.length > 0 || filteredProject !== 'all'}
+        hasFilters={linkFilter !== 'all' || folderId !== 'all' || activeTags.length > 0 || filteredProject !== 'all'}
         tagFilter={
           <>
             <TagSelector
@@ -152,7 +158,7 @@ export default function DocumentationWorkspace({
               value={activeTags}
               onChange={setTagIds}
             />
-            {query ||
+            {linkFilter !== 'all' || query ||
             folderId !== 'all' ||
             activeTags.length ||
             (!projectScope && filter !== 'all') ? (
@@ -162,6 +168,7 @@ export default function DocumentationWorkspace({
                 onClick={async () => {
                   if (await store.flush()) {
                     setQuery('')
+                    setLinkFilter('all')
                     setFolderId('all')
                     setTagIds([])
                     setFilter(projectScope || 'all')

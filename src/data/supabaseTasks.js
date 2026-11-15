@@ -7,7 +7,8 @@ import {
   optionalText,
 } from './cloudRequest.js'
 
-const columns = 'id,project_id,title,description,status,implementation_notes,created_at,updated_at'
+export const TASK_BASE_FIELDS = 'id,project_id,title,description,status,implementation_notes,created_at,updated_at,completed_at,archive_grace_started_at,archives_at'
+const columns = `${TASK_BASE_FIELDS},is_archived,server_now,archive_seconds_remaining`
 const taskModel = (row) => ({
   id: row.id,
   projectId: row.project_id,
@@ -17,6 +18,12 @@ const taskModel = (row) => ({
   implementationNotes: row.implementation_notes ?? '',
   createdAt: row.created_at,
   updatedAt: row.updated_at,
+  completedAt: row.completed_at ?? null,
+  archiveGraceStartedAt: row.archive_grace_started_at ?? null,
+  archivesAt: row.archives_at ?? null,
+  isArchived: row.is_archived === true,
+  serverNow: row.server_now ?? null,
+  archiveSecondsRemaining: row.archive_seconds_remaining == null ? null : Number(row.archive_seconds_remaining),
 })
 
 function patch(input) {
@@ -36,6 +43,13 @@ function patch(input) {
 
 export function createTasksApi(client = supabase, userId) {
   const table = () => client.schema('public').from('tasks')
+  const workflow = () => client.schema('public').from('task_workflow')
+  async function readTask(projectId, id, signal) {
+    return taskModel(await cloudResult(
+      workflow().select(columns).eq('id', id).eq('project_id', projectId).single(),
+      signal, 'task_workflow', 'SELECT', true,
+    ))
+  }
   async function ownedProject(projectId, signal) {
     if (!projectId) throw new Error('Choose an existing project.')
     await cloudResult(
@@ -61,13 +75,13 @@ export function createTasksApi(client = supabase, userId) {
         rows.push(
           ...(await cloudRows(
             () =>
-              table()
+              workflow()
                 .select(columns, { count: 'exact' })
                 .in('project_id', projectIds.slice(offset, offset + 100))
                 .order('created_at')
                 .order('id'),
             signal,
-            'tasks',
+            'task_workflow',
           )),
         )
       }
@@ -85,14 +99,19 @@ export function createTasksApi(client = supabase, userId) {
       const row = await cloudResult(
         table()
           .insert({ ...values, project_id: projectId })
-          .select(columns)
+          .select(TASK_BASE_FIELDS)
           .single(),
         signal,
         'tasks',
         'INSERT',
         true,
       )
-      return taskModel(row)
+      // A confirmed write remains confirmed if this presentation read fails.
+      // The store will refresh and report any missing view/schema separately.
+      try { return await readTask(projectId, row.id, signal) } catch (failure) {
+        if (failure.name === 'AbortError') throw failure
+        return taskModel(row)
+      }
     },
     async updateTask(projectId, id, input, { signal = new AbortController().signal } = {}) {
       await requireCloudUser(client, userId, signal)
@@ -102,14 +121,17 @@ export function createTasksApi(client = supabase, userId) {
           .update(patch(input))
           .eq('id', id)
           .eq('project_id', projectId)
-          .select(columns)
+          .select(TASK_BASE_FIELDS)
           .single(),
         signal,
         'tasks',
         'UPDATE',
         true,
       )
-      return taskModel(row)
+      try { return await readTask(projectId, row.id, signal) } catch (failure) {
+        if (failure.name === 'AbortError') throw failure
+        return taskModel(row)
+      }
     },
     async deleteTask(projectId, id, { signal = new AbortController().signal } = {}) {
       await requireCloudUser(client, userId, signal)

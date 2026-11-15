@@ -15,6 +15,8 @@ export function cloudSupabase() {
     calls: [],
     failure: null,
     pause: null,
+    serverTime: null,
+    workflowAvailable: true,
     emit(id, event, token) {
       session = id
         ? {
@@ -50,7 +52,21 @@ export function cloudSupabase() {
     },
   }
   const timestamp = () => new Date(Date.now() + ++clock * 1000).toISOString()
+  const featureStart = new Date().toISOString()
+  const serverTime = () => db.serverTime ?? Date.now()
+  function completion(row) {
+    const completed_at = row.completed_at ?? null
+    const archive_grace_started_at = row.status === 'done' ? row.archive_grace_started_at ?? (completed_at ? null : featureStart) : null
+    const archives_at = row.status === 'done' ? row.archives_at ?? new Date(Date.parse(completed_at || archive_grace_started_at) + 168 * 3600000).toISOString() : null
+    return { completed_at, archive_grace_started_at, archives_at }
+  }
+  function workflowRow(row) {
+    const metadata = completion(row)
+    return { ...row, ...metadata, is_archived: row.status === 'done' && Date.parse(metadata.archives_at) <= serverTime(), server_now: new Date(serverTime()).toISOString(), archive_seconds_remaining: row.status === 'done' ? Math.max(0, (Date.parse(metadata.archives_at) - serverTime()) / 1000) : null }
+  }
   function query(table) {
+    const workflow = table === 'task_workflow'
+    if (workflow) table = 'tasks'
     const state = { table, op: 'select', filters: [], fields: '*', signal: null }
     const builder = {
       select(fields) {
@@ -123,6 +139,7 @@ export function cloudSupabase() {
       db.calls.push({ ...state })
       if (db.pause) await db.pause(state)
       if (state.response) return state.response
+      if (!db.workflowAvailable && (workflow || (table === 'tasks' && state.fields.includes('completed_at')))) return { data: null, error: { code: 'PGRST205' } }
       const failure = db.failure?.(state)
       if (failure instanceof Error) throw failure
       if (failure) return { data: null, error: failure }
@@ -171,6 +188,7 @@ export function cloudSupabase() {
         const now = timestamp()
         const row = { id: crypto.randomUUID(), created_at: now, updated_at: now, ...state.values }
         if (['projects', 'notes', 'folders', 'tags'].includes(table)) row.user_id ??= actor
+        if (table === 'tasks') Object.assign(row, { completed_at: null, archive_grace_started_at: null, archives_at: null })
         if (!owns(row)) return { data: null, error: { code: '42501' } }
         if (state.op === 'upsert') {
           const keys = state.conflict.split(',')
@@ -188,7 +206,16 @@ export function cloudSupabase() {
       } else {
         rows = db[table].filter(matches)
         if (state.op === 'update')
-          for (const row of rows) Object.assign(row, state.values, { updated_at: timestamp() })
+          for (const row of rows) {
+            const previous = table === 'tasks' ? completion(row) : null
+            const oldStatus = row.status
+            Object.assign(row, state.values, { updated_at: timestamp() })
+            if (table === 'tasks') {
+              if (row.status === 'todo') Object.assign(row, { completed_at: null, archive_grace_started_at: null, archives_at: null })
+              else if (oldStatus === 'todo') Object.assign(row, { completed_at: new Date(serverTime()).toISOString(), archive_grace_started_at: null, archives_at: new Date(serverTime() + 168 * 3600000).toISOString() })
+              else Object.assign(row, previous)
+            }
+          }
         if (state.op === 'delete') {
           db[table] = db[table].filter((row) => !rows.includes(row))
           if (table === 'projects')
@@ -216,8 +243,8 @@ export function cloudSupabase() {
       const count = rows.length
       if (state.limit) rows = rows.slice(0, state.limit)
       if (state.range) rows = rows.slice(state.range[0], state.range[1] + 1)
-      const data = rows.map((row) =>
-        Object.fromEntries(state.fields.split(',').map((field) => [field, row[field]])),
+      const data = rows.map((source) =>
+        Object.fromEntries(state.fields.split(',').map((field) => [field, (workflow ? workflowRow(source) : table === 'tasks' ? { ...source, ...completion(source) } : source)[field]])),
       )
       return { data: structuredClone(state.single ? (data[0] ?? null) : data), error: null, count }
     }

@@ -1,4 +1,5 @@
 import { linkTaskNotes, normalizeTask } from './projects.js'
+import { isArchivedTask } from './taskWorkflow.js'
 
 export function linkedNotesForTask(task, notes) {
   const ids = new Set(normalizeTask(task).linkedNoteIds)
@@ -9,7 +10,13 @@ export function linkedNotesForTask(task, notes) {
 export function tasksForNote(projects, noteId) {
   return projects.flatMap(project => project.tasks
     .filter(task => normalizeTask(task).linkedNoteIds.includes(noteId))
-    .map(task => ({ projectId: project.id, projectName: project.name, taskId: task.id, title: task.title, status: task.status })))
+    .map(task => ({ projectId: project.id, projectName: project.name, taskId: task.id, title: task.title, status: task.status, isArchived: isArchivedTask(task) })))
+}
+
+export function filterDocumentation(notes, projects, filter = 'all') {
+  if (filter === 'all') return notes
+  const linked = new Set(projects.flatMap((project) => project.tasks.flatMap((task) => task.linkedNoteIds || [])))
+  return notes.filter((note) => filter === 'task-linked' ? linked.has(note.id) : !linked.has(note.id))
 }
 
 // A note is saved first. If linking fails, return it for an idempotent retry;

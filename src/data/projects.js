@@ -13,6 +13,10 @@ export function normalizeTask(task) {
     // Older tasks have no known creation time; do not invent one on each load.
     createdAt: validDate(task.createdAt) ? task.createdAt : null,
     updatedAt: validDate(task.updatedAt) ? task.updatedAt : validDate(task.createdAt) ? task.createdAt : null,
+    completedAt: validDate(task.completedAt) ? task.completedAt : null,
+    archiveGraceStartedAt: validDate(task.archiveGraceStartedAt) ? task.archiveGraceStartedAt : null,
+    archivesAt: validDate(task.archivesAt) ? task.archivesAt : null,
+    isArchived: task.status === 'done' && task.isArchived === true,
   }
 }
 
@@ -75,6 +79,12 @@ export function updateTaskDetails(projects, projectId, taskId, changes) {
     if (typeof changes.description === 'string') patch.description = changes.description
     if (typeof changes.implementationNotes === 'string') patch.implementationNotes = changes.implementationNotes
     if (['todo', 'done'].includes(changes.status)) patch.status = changes.status
+    if (changes.status === 'todo') {
+      patch.completedAt = null
+      patch.archiveGraceStartedAt = null
+      patch.archivesAt = null
+      patch.isArchived = false
+    }
     if (Array.isArray(changes.linkedNoteIds)) patch.linkedNoteIds = [...new Set(changes.linkedNoteIds.filter(id => typeof id === 'string'))]
     if (Array.isArray(changes.tagIds)) patch.tagIds = normalizeIds(changes.tagIds)
     return { ...normalizeTask(task), ...patch, updatedAt: new Date().toISOString() }

@@ -31,3 +31,10 @@ dist-ssr
 supabase/.temp/
 supabase/.branches/
 .supabase/
+
+# Reviewed database setup and isolated database artifacts stay on this machine.
+/database-local/
+*.sql
+*.dump
+*.sqlite
+*.db

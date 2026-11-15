@@ -20,6 +20,9 @@ export default function NotesList({
   tagFilter,
   hasFilters,
   noteDrag,
+  linkFilter = 'all',
+  onLinkFilter,
+  taskLinksAvailable = true,
 }) {
   const scroll = useNoteDragScroll(noteDrag?.draggingId)
   return (
@@ -51,6 +54,14 @@ export default function NotesList({
         </button>
         <div className="notes-filters">
           <label>
+            Documentation
+            <select aria-label="Filter documentation links" value={taskLinksAvailable ? linkFilter : 'all'} disabled={!taskLinksAvailable} onChange={(event) => onLinkFilter(event.target.value)}>
+              <option value="all">All</option>
+              <option value="task-linked">Task-linked</option>
+              <option value="independent">Independent</option>
+            </select>
+          </label>
+          <label>
             Project
             <select
               aria-label="Filter notes by project"
@@ -80,6 +91,7 @@ export default function NotesList({
           </label>
         </div>
         {tagFilter}
+        {!taskLinksAvailable && <p className="board-filter-hint">Task-link filters need task data. Reload cloud data after resolving its error.</p>}
         {noteDrag?.enabled && (
           <p className="note-drag-status" role="status" aria-live="polite">
             {noteDrag.message ||

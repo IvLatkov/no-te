@@ -156,6 +156,10 @@ export function validateBackup(input) {
       references(task.tagIds, tagIds, 'Task tags')
       timestamp(task.createdAt, 'Task creation date', true)
       timestamp(task.updatedAt, 'Task updated date', true)
+      for (const field of ['completedAt', 'archiveGraceStartedAt', 'archivesAt']) {
+        if (own(task, field)) timestamp(task[field], `Task ${field}`, true)
+      }
+      if (own(task, 'isArchived')) requireValue(typeof task.isArchived === 'boolean', 'Task archive state must be true or false.')
       tasks.push(task)
     }
   }

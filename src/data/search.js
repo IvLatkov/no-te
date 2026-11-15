@@ -1,4 +1,5 @@
 import { noteText } from './notes.js'
+import { isArchivedTask } from './taskWorkflow.js'
 
 export function buildSearchIndex(projects, notes, tags, { includeTags = false } = {}) {
   const names = (ids) =>
@@ -28,6 +29,7 @@ export function buildSearchIndex(projects, notes, tags, { includeTags = false } 
         type: 'Tasks',
         id: task.id,
         projectId: project.id,
+        archived: isArchivedTask(task),
         title: task.title,
         text: [task.description, task.implementationNotes, names(task.tagIds)]
           .filter(Boolean)

@@ -3,6 +3,8 @@ import { Plus } from 'lucide-react'
 import TaskCard from './TaskCard'
 import TagSelector from './TagSelector'
 import { selectTasks } from '../data/organization'
+import { activeTasks } from '../data/taskWorkflow'
+import TaskArchiveModal from './TaskArchiveModal'
 
 const columns = [
   { id: 'todo', title: 'To Do' },
@@ -25,8 +27,10 @@ export default function TaskBoard({
   const [query, setQuery] = useState('')
   const [tagIds, setTagIds] = useState([])
   const [sort, setSort] = useState('stored')
+  const [archiveOpen, setArchiveOpen] = useState(false)
   const activeTags = tagIds.filter((id) => organization.tags.some((tag) => tag.id === id))
-  const filtered = selectTasks(project.tasks, { query, tagIds: activeTags, sort })
+  const active = activeTasks(project.tasks)
+  const filtered = selectTasks(active, { query, tagIds: activeTags, sort })
   const filtering = Boolean(query.trim() || activeTags.length || sort !== 'stored')
   function endDrag() {
     setDragging(null)
@@ -44,7 +48,7 @@ export default function TaskBoard({
       if (
         !readOnly &&
         data.projectId === project.id &&
-        project.tasks.some((task) => task.id === data.taskId)
+                active.some((task) => task.id === data.taskId)
       )
         onMove(data.taskId, status)
     } catch {
@@ -102,7 +106,7 @@ export default function TaskBoard({
       </div>
       {filtering && (
         <p className="board-filter-hint">
-          Showing {filtered.length} of {project.tasks.length} tasks. You can still drag tasks
+          Showing {filtered.length} of {active.length} tasks. You can still drag tasks
           between To Do and Done.
         </p>
       )}
@@ -132,6 +136,9 @@ export default function TaskBoard({
                   {column.title}
                   <span className="task-count">{tasks.length}</span>
                 </h2>
+                {column.id === 'done' && (
+                  <button type="button" className="text-action" onClick={() => setArchiveOpen(true)}>Archived</button>
+                )}
                 {column.id === 'todo' && (
                   <button
                     type="button"
@@ -177,6 +184,15 @@ export default function TaskBoard({
           )
         })}
       </div>
+      {archiveOpen && (
+        <TaskArchiveModal
+          project={project}
+          readOnly={readOnly}
+          onClose={() => setArchiveOpen(false)}
+          onOpenTask={onEdit}
+          onRestore={(id) => onMove(id, 'todo')}
+        />
+      )}
     </>
   )
 }

@@ -21,12 +21,12 @@ export function createCloudProjectsStore(client, userId) {
     controllers.add(value)
     return value
   }
-  async function load({ afterMutation = false } = {}) {
+  async function load({ afterMutation = false, quiet = false } = {}) {
     if (mutationLocked && !afterMutation) return false
     active = true
     const version = ++revision
     const request = controller()
-    publish({ loading: true, error: '' })
+    publish({ loading: quiet || afterMutation ? snapshot.loading : true, error: quiet ? snapshot.error : '' })
     try {
       const projects = await projectsApi.fetchProjects({ signal: request.signal })
       const tasks = projects.length
@@ -42,11 +42,12 @@ export function createCloudProjectsStore(client, userId) {
           tasks: tasks.filter((task) => task.projectId === project.id),
         })),
         loading: false,
+        error: '',
       })
       return true
     } catch (failure) {
       if (active && version === revision && failure.name !== 'AbortError')
-        publish({ loading: false, error: failure.message })
+        publish({ loading: false, error: `${failure.message} Task/archive status could not be refreshed; any previously displayed task state may be stale.` })
       return false
     } finally {
       controllers.delete(request)
@@ -86,6 +87,18 @@ export function createCloudProjectsStore(client, userId) {
     projects.map((project) =>
       project.id === projectId ? { ...project, tasks: change(project.tasks) } : project,
     )
+  function mergeTask(task, updated) {
+    if (updated.serverNow) return updated
+    // A confirmed write can outlive a failed workflow read. Preserve the last
+    // server-derived archive flag until refresh succeeds, rather than briefly
+    // putting an archived task back into Done. Reopening always clears it.
+    return {
+      ...updated,
+      isArchived: updated.status === 'todo' ? false : task.isArchived,
+      serverNow: task.serverNow,
+      archiveSecondsRemaining: updated.status === 'todo' ? null : task.archiveSecondsRemaining,
+    }
+  }
   return {
     subscribe(listener) {
       listeners.add(listener)
@@ -122,7 +135,7 @@ export function createCloudProjectsStore(client, userId) {
         (options) => tasksApi.updateTask(projectId, id, values, options),
         (projects, updated) =>
           updateTasks(projects, projectId, (tasks) =>
-            tasks.map((task) => (task.id === id ? updated : task)),
+            tasks.map((task) => (task.id === id ? mergeTask(task, updated) : task)),
           ),
       ),
     moveTask: (projectId, id, status) =>
@@ -130,7 +143,7 @@ export function createCloudProjectsStore(client, userId) {
         (options) => tasksApi.moveTask(projectId, id, status, options),
         (projects, updated) =>
           updateTasks(projects, projectId, (tasks) =>
-            tasks.map((task) => (task.id === id ? updated : task)),
+            tasks.map((task) => (task.id === id ? mergeTask(task, updated) : task)),
           ),
       ),
     deleteTask: (projectId, id) =>

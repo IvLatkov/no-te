@@ -18,6 +18,8 @@ export default function Dashboard({
   onOpenProject,
   onOpenTask,
   onOpenNote,
+  onRestoreTask,
+  readOnly,
 }) {
   const [appsOpen, setAppsOpen] = useState(false)
   const [launchNotice, setLaunchNotice] = useState('')
@@ -107,8 +109,9 @@ export default function Dashboard({
         </div>
         <p className="app-launch-notice" role="status">{launchNotice}</p>
       </section>
-      {selectedProject && !projectsLoading && !projectsError && (
+      {selectedProject && !projectsLoading && (
         <DashboardProjectPanels
+          key={selectedProject.id}
           project={selectedProject}
           notes={notes}
           notesLoading={notesLoading}
@@ -116,6 +119,9 @@ export default function Dashboard({
           onOpenProject={onOpenProject}
           onOpenTask={onOpenTask}
           onOpenNote={onOpenNote}
+          onRestoreTask={onRestoreTask}
+          readOnly={readOnly}
+          projects={projects}
         />
       )}
     </div>
