@@ -35,8 +35,19 @@ export default function Dashboard({
       setAppsOpen(false)
       if (shortcuts.current?.contains(document.activeElement)) toggle.current?.focus()
     }
+    function escape(event) {
+      if (event.key !== 'Escape') return
+      // A later-opened dialog owns Escape while it is active.
+      if (document.querySelector('dialog[open], [aria-modal="true"]')) return
+      setAppsOpen(false)
+      if (shortcuts.current?.contains(document.activeElement)) toggle.current?.focus()
+    }
     document.addEventListener('click', closeApps, true)
-    return () => document.removeEventListener('click', closeApps, true)
+    document.addEventListener('keydown', escape)
+    return () => {
+      document.removeEventListener('click', closeApps, true)
+      document.removeEventListener('keydown', escape)
+    }
   }, [appsOpen])
 
   function describeLaunch(name) {
@@ -109,6 +120,17 @@ export default function Dashboard({
         </div>
         <p className="app-launch-notice" role="status">{launchNotice}</p>
       </section>
+      {!selectedProject && !projectsLoading && !projectsError && (
+        <section className="dashboard-start" aria-labelledby="dashboard-start-heading">
+          <h2 id="dashboard-start-heading">{projects.length ? 'Choose a project' : 'Start with a project'}</h2>
+          <p>{projects.length
+            ? 'Use Project above to show tasks and documentation here, or browse all projects.'
+            : 'Create a project to keep its tasks and documentation together.'}</p>
+          <button type="button" className="button secondary" onClick={onOpenProjects}>
+            {projects.length ? 'View projects' : 'Create your first project'}
+          </button>
+        </section>
+      )}
       {selectedProject && !projectsLoading && (
         <DashboardProjectPanels
           key={selectedProject.id}

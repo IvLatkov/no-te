@@ -2,13 +2,23 @@
 
 A personal workspace for project tasks, implementation notes and searchable documentation, built with React and Supabase.
 
+**Product design focus:** keeping operational work and its context together. No-Te is a self-initiated, AI-assisted personal tool and a case study in internal-workspace workflows: project orientation, task-to-documentation links, retained completion history and save recovery.
+
+## Start here: product and design
+
+- **[Design case study](docs/design-case-study.md):** problem, user journey, interface walkthrough, decisions, tradeoffs, my role and a proposed usability study.
+- **[UX and accessibility review](docs/ux-review.md):** source-based findings, small implemented improvements and a prioritized backlog with acceptance checks.
+- **[Verification record](docs/portfolio-verification.md):** checks performed for this portfolio review and their limits.
+
+The current user is me. This repository demonstrates a working product and explainable decisions; it does not claim customer research, team adoption or measured productivity gains. The case study distinguishes implemented behavior from future validation.
+
 **[Live website](https://no-te.org/) · [Source](https://github.com/IvLatkov/no-te) · [Companion game project](https://github.com/IvLatkov/wh40k-survivors-prototype)**
 
 The deployed application requires sign-in. Public demo credentials are not provided; the source and screenshot below are available without an account.
 
-![No-Te dashboard showing the project picker, task columns and documentation panel](docs/images/dashboard.png)
+![No-Te dashboard showing the WH40k Survivor Game project, completed tasks and linked documentation](docs/images/Snimka%20zaslona%202026-11-15%20214213.png)
 
-*Dashboard captured from a local development build using QA tasks. It shows the project workspace layout; later refinements add archive controls and documentation filters.*
+*Dashboard showing the WH40k Survivor Game project, completed connector test tasks and linked implementation documentation.*
 
 ## Why I built it
 
@@ -93,7 +103,7 @@ npm run lint
 npm run build
 ```
 
-**Recorded local validation, 15 November 2026:** 164 tests passed with no skips in the configured development environment. Lint and the production build passed with existing warnings about two React patterns and bundle size. This is a dated result, not a claim that every environment or future commit passes automatically.
+**Portfolio review validation, 15 November 2026:** see the [verification record](docs/portfolio-verification.md) for the current public-checkout results, skipped private SQL checks and existing lint/build warnings. The earlier 164-pass result came from a configured development environment with private fixtures; it is not the result of running a fresh public checkout.
 
 The suites cover authentication UI, account isolation, project/task operations, autosave failure recovery, documentation links, archive boundaries, backup validation, dashboard persistence and external updates. See [dashboard behavior tests](tests/dashboard-projects.test.js), [refresh tests](tests/cloud-refresh.test.js), [documentation tests](tests/cloud-documentation.test.js) and [connector creation tests](tests/mcp-task-creation.test.js).
 

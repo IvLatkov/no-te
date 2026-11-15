@@ -282,6 +282,11 @@
 .note-title:focus {
   box-shadow: 0 1px var(--accent-border-soft);
 }
+.note-title:focus-visible,
+.note-prose:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 3px;
+}
 .note-title::placeholder {
   color: #8e859a;
 }
