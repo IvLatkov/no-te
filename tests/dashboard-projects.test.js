@@ -32,6 +32,60 @@ async function choose(ui, name) {
   await ui.waitFor(() => document.querySelector('#dashboard-project-heading')?.textContent === name)
 }
 
+test('dashboard restores the last project after remount, isolates accounts and remembers Hide project', async () => {
+  const { db } = seed()
+  const ui = await uiHarness('dashboard-persisted-selection', { module: '/src/App.jsx', props: { client: db, configError: '' } })
+  try {
+    await ui.mount()
+    await ui.waitFor(() => document.querySelector('.dashboard-project-options li'))
+    await choose(ui, 'Release')
+    await ui.mount()
+    await ui.waitFor(() => document.querySelector('#dashboard-project-heading')?.textContent === 'Release')
+    await ui.act(async () => db.emit('bob'))
+    await ui.waitFor(() => document.querySelector('#dashboard-project-options')?.textContent.includes('Private project'))
+    assert.equal(document.querySelector('.dashboard-project-panels'), null)
+    await choose(ui, 'Private project')
+    await ui.act(async () => db.emit('alice'))
+    await ui.waitFor(() => document.querySelector('#dashboard-project-heading')?.textContent === 'Release')
+    await ui.click(document.querySelector('.dashboard-project-picker > button'))
+    await ui.click(ui.byText('Hide project'))
+    await ui.mount()
+    await ui.waitFor(() => document.querySelector('.dashboard-project-options li'))
+    assert.equal(document.querySelector('.dashboard-project-panels'), null)
+  } finally { await ui.close() }
+})
+
+test('dashboard refreshes externally created and completed tasks with new documentation, preserving its selection', async () => {
+  const { db, projects } = seed()
+  const ui = await uiHarness('dashboard-external-updates', { module: '/src/App.jsx', props: { client: db, configError: '' } })
+  try {
+    await ui.mount()
+    await ui.waitFor(() => document.querySelector('.dashboard-project-options li'))
+    await choose(ui, 'Release')
+    const task = { id: crypto.randomUUID(), project_id: projects[0].id, title: 'Codex-created task', description: '',
+      status: 'todo', implementation_notes: '', created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+    db.tasks.push(task)
+    await ui.act(async () => window.dispatchEvent(new Event('focus')))
+    await ui.waitFor(() => document.querySelector('[aria-labelledby="dashboard-todo"]').textContent.includes(task.title))
+    task.status = 'done'
+    task.completed_at = new Date().toISOString()
+    const note = { ...db.notes[0], id: crypto.randomUUID(), title: 'Implementation: Codex-created task' }
+    db.notes.push(note)
+    db.task_notes.push({ task_id: task.id, note_id: note.id })
+    await ui.act(async () => window.dispatchEvent(new Event('online')))
+    await ui.waitFor(() => document.querySelector('[aria-labelledby="dashboard-done"]').textContent.includes(task.title) &&
+      document.querySelector('[aria-labelledby="dashboard-documentation"]').textContent.includes(note.title))
+    assert.doesNotMatch(document.querySelector('[aria-labelledby="dashboard-todo"]').textContent, /Codex-created task/)
+    assert.equal(document.querySelector('#dashboard-project-heading').textContent, 'Release')
+    assert.ok(db.calls.every(call => call.op === 'select'))
+    // A genuinely deleted selection is cleared after the successful refresh.
+    db.projects = db.projects.filter(item => item.id !== projects[0].id)
+    await ui.act(async () => window.dispatchEvent(new Event('focus')))
+    await ui.waitFor(() => !document.querySelector('.dashboard-project-panels'))
+    assert.equal(localStorage.getItem('no-te.dashboard-project:alice'), null)
+  } finally { await ui.close() }
+})
+
 test('dashboard project selection scopes all three panels, switches, hides and preserves cloud data', async () => {
   const { db } = seed()
   const saved = JSON.stringify([db.projects, db.tasks, db.notes])

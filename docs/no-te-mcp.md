@@ -1,10 +1,43 @@
 # Local No-Te MCP connector (review/setup required)
 
-This is an explicitly requested task workflow, not an unattended worker. No connector has been registered, no production SQL has been applied, and no live login/completion has been verified by this implementation.
+This is an explicitly requested implementation workflow, not an unattended worker. This extension preserves the existing connection, credentials, repository mappings and Codex registration. Read-only catalog inspection found the existing completion RPC in production; the new creation RPC is not installed there. No production SQL, live task creation, registration or game-repository changes were performed during this extension.
 
 The Node stdio process in `connector/` is separate from Vite: nothing imports it into `src/`, no server credential is included in the frontend, and the frontend behavior is unchanged. New dependencies are pinned: official MCP server/client SDK 2.4.0, Zod 4.6.7, and native OS keyring binding 2.1.2. Use Node 22 or newer compatible with the existing project.
 
-## Windows setup
+## Upgrade an existing connection
+
+The server now exposes five tools: `list_projects`, `list_tasks`, `read_task`, **`create_task`**, and the existing `complete_task`. No additional dependency or server registration is needed. Do not repeat configure/login/registration merely to upgrade this working connection.
+
+The next concrete setup step is to review the **new, local-only** SQL:
+
+```powershell
+Set-Location 'C:\Users\Mario\VSCode Projects\No-Te'
+Get-Content -LiteralPath '.\database-local\mcp-task-creation.sql'
+```
+
+After separate owner review/authorization, the database owner must apply **only** this additive creation migration using their controlled production process. Do not reapply the existing completion/task-workflow setup. The creation SQL adds the private `no_te_connector.task_creations` ledger and `public.no_te_create_task(uuid,text,text,uuid)` SECURITY INVOKER RPC; it does not replace completion, auth, existing policies or task triggers. Keep `no_te_connector` outside PostgREST exposed schemas. All SQL remains Git-ignored under `database-local/`; transfer it privately for review. It will not accompany a GitHub checkout. Until the migration is installed, `create_task` reports `MIGRATION_REQUIRED` instead of falling back to non-transactional inserts. This implementation has not applied it to production.
+
+Once the owner has applied it, restart the **existing** connector/Codex session to discover `create_task`. In the mapped repository run the existing connector's `check` command, then manually verify `list_projects`, a controlled `create_task` call, an identical retry, and `read_task`. `check` is read-only and does not prove that either mutation RPC works. Completing a real task must follow actual implementation and verification; do not mark a dummy or unverified task Done merely to test connectivity. Cross-connection concurrency and the live create → read → verified implementation → document → Done flow still require manual verification. No additional server is registered by this code.
+
+## Creating a task for a concrete implementation request
+
+Use the exact review-only [AGENTS.md block](no-te-mcp-agents-snippet.md) later in the game repository, merging it with existing instructions rather than replacing them. It is not installed automatically. The workflow verifies the mapped project, reads a supplied task ID or searches/inspects existing candidates, asks when scope is ambiguous, and creates a task only when no clear match exists. It applies to explicit implementation requests, not questions, brainstorming, planning or read-only investigations.
+
+`create_task` accepts **only** `projectId`, `title` (1–200 characters), `description` (1–20,000 characters), and `operationKey` (UUID v4). Describe the requested behaviour and acceptance criteria in `description`; for example use “Requested behaviour:” and “Acceptance criteria:” sections. The connector cannot independently determine whether prose faithfully captures the user's request. Strings are trimmed once at the connector boundary. Owner, task ID, status, timestamps, implementation notes and arbitrary fields are rejected. A repository's permitted project is rechecked against verified Supabase identity before the RPC, and the RPC checks ownership again under existing RLS.
+
+Generate a fresh creation operation key with the actual Node crypto API, once per new logical operation:
+
+```powershell
+node --input-type=module -e "import { randomUUID } from 'node:crypto'; console.log(randomUUID())"
+```
+
+Use that value as `operationKey`; keep it and the exact arguments while a request is unresolved. Do not generate another key for a retry. The RPC uses a per-user/key transaction-level advisory lock and a unique ledger key. It inserts a task in **To Do** using database defaults for ID and timestamps, then records the operation in the same transaction. A failure of either write rolls back both. Titles are not unique identifiers: a genuinely new key may create a second task with the same title. Reusing a key with a changed project, title or description is rejected.
+
+The confirmed result contains `task_id`, `project_id`, title, description, status, server `created_at`, exact `updated_at` revision, completion/archive timestamps and `replayed`. Read the saved task before implementation and again before completion. Identical retries return the original task's **current** saved state without updating it; later edits, Done/archive state and timestamps are preserved. If the original task has been deleted, its retained creation tombstone produces `CREATED_TASK_UNAVAILABLE` rather than creating a duplicate. Project deletion removes its ledger rows. The connector exposes no deletion tool.
+
+Thrown network failures, database failures and malformed confirmations never report successful tracking. A network loss after commit may still mean the task exists: retry the same key/content. If creation fails, report that the work is not confirmed as tracked. The existing transactional completion report/RPC and seven-day archive remain unchanged; incomplete implementation or required verification leaves the task in To Do.
+
+## First-time Windows setup only
 
 Run in your own PowerShell terminal. Never send a password/token through chat, MCP arguments, command-line arguments, source files, or VITE variables.
 
@@ -69,9 +102,9 @@ env_vars = ["NO_TE_MCP_SESSION"]
 
 Do not create a duplicate TOML section: add the `env_vars` line to the existing one. Then run `codex` yourself inside the child shell in the mapped repository. This fallback supports Codex CLI in the VS Code integrated terminal; an already-running VS Code GUI extension cannot inherit the child shell's environment. Do not print environment variables, launch unrelated children from that shell, persist the variable, or put token values into TOML. Exit the child shell to attempt revocation and discard its memory session. A restarted MCP process after refresh can require a new session-only login because the shell's original environment cannot receive refreshed child tokens. Normal persistent login is recommended for the GUI extension. The wrapper does not install configuration or start an agent automatically.
 
-## Database dependency — local review only
+## Existing completion database dependency
 
-Review **`database-local/mcp-completion.sql`**, which is intentionally Git-ignored together with every SQL file. It depends on the existing seven-day `task_workflow` view, `no_te_task_completion` trigger, task `updated_at` server trigger, and existing notes/task_notes ownership RLS. Do not reapply the production task-workflow migration. The database owner must review and apply only this new connector migration through their normal controlled process before a live completion test. This implementation has **not** applied it to production. Because SQL stays local by request, distribute it to the owner through a private review channel; it will not accompany a GitHub checkout.
+The original **`database-local/mcp-completion.sql`** is intentionally Git-ignored together with every SQL file. It depends on the existing seven-day `task_workflow` view, `no_te_task_completion` trigger, task `updated_at` server trigger, and existing notes/task_notes ownership RLS. Read-only inspection confirms the completion RPC is already present in production. **Do not reapply it or the task-workflow migration for this upgrade.** On a completely new isolated installation, review the dependencies in order: task workflow/server timestamp setup, completion SQL, creation SQL. No production migration is applied by this implementation.
 
 The additive migration creates a private `no_te_connector.completions` idempotency ledger and a single public `no_te_complete_task` **SECURITY INVOKER** RPC. Do **not** add `no_te_connector` to Supabase/PostgREST exposed schemas. Existing RLS stays enabled; the function has an empty search_path and EXECUTE only for authenticated callers. It checks `auth.uid()`, ownership, stable project/task IDs, the exact server task revision, To Do status, report structure and successful verification attestations. No client completion/archive dates are accepted. Task requirements and other linked-note revisions are not locked during coding: read and review them again before completion.
 
@@ -98,8 +131,31 @@ This is a shape example, not evidence that checks ran. Failed/incomplete require
 
 ## Verification and remaining manual checks
 
+### Creation migration deployment gate (review correction, 15 November 2026)
+
+Before applying `database-local/mcp-task-creation.sql`, open Supabase **Data API settings**
+and inspect the **Exposed schemas** list. `no_te_connector` must be absent. Record
+that check with the deployment review; a SQL comment or SQL Editor session setting
+does not verify PostgREST's active schema list. Do not apply until this is confirmed.
+Authenticated users need ledger INSERT privileges for the invoker RPC, so exposing
+the schema would also expose direct ledger writes outside the RPC's input checks.
+Keep this requirement in force after deployment and on future API-setting changes.
+
+The revised creation SQL is a **one-time migration**. It rejects an existing
+`no_te_connector.task_creations` relation rather than accepting an unverified older
+definition. On that error, roll back an open transaction, inspect the existing
+schema/data, and prepare a separately reviewed upgrade; do not drop the ledger or
+remove the guard to force installation. An accidental rerun must leave saved tasks
+and retry records intact. Prerequisite triggers must fire for normal requests
+(`O` or `A`); replica-only and disabled triggers are rejected. A project ID index
+supports the ledger's project-deletion cascade.
+
+After applying, verify live create/retry/complete behavior and separate-connection
+PostgreSQL concurrency before treating automatic task creation as production-ready.
+Isolated PGlite tests cannot verify live API exposure or cross-connection locking.
+
 ```powershell
-node --test tests/mcp-connector.test.js tests/mcp-completion-sql.test.js
+node --test tests/mcp-connector.test.js tests/mcp-completion-sql.test.js tests/mcp-task-creation.test.js
 npm run lint
 npm test
 npm run build
@@ -107,6 +163,6 @@ npm run build
 
 Tests use the official SDK client/in-memory transport and a real stdio subprocess. Auth/data clients are mocked; SQL runs in isolated PGlite PostgreSQL with representative ownership RLS, never production. SQL integration explicitly skips when the private migrations are absent on another checkout. Tests cover protocol/tool validation, session refresh/expiry, error redaction, project isolation, ownership, conflicting revisions, retry safety, document-before-Done ordering, late-write rollback, restoration and archive-linked document survival. Advisory lock concurrency against two real Postgres connections, actual Windows Credential Manager login/refresh/logout, network-loss retries through PostgREST, and end-to-end VS Code connectivity require owner-assisted setup. No live connection is claimed. Review actual production RLS and note constraints with the migration owner before applying it.
 
-Local verification on 15 November 2026: `npm test` passed **147/147** tests with no skips, including 12 new connector/isolated-SQL tests. `npm run lint` passed with only the existing `useTaskDraft` refs and `LocalWorkspace` dependency warnings. `npm run build` passed with the existing chunk-size warning. A source/build search found no connector code or session environment variable in the frontend bundle. Read-only production catalog inspection confirmed the existing task constraints and completion/updated_at triggers; no production rows, schema, settings or RLS were changed. The existing Git stash was left untouched.
+Creation extension verification on 15 November 2026: `npm test` passed **153/153** tests with no skips, including 18 connector/isolated-SQL tests. The six creation tests cover strict inputs, saved-field confirmation, owner/project isolation, identical and conflicting retries, concurrently submitted requests, late ledger failure rollback, deletion tombstones, and the complete create/read/document/Done flow. The end-to-end test deliberately loses a response after commit, confirms only one task after retry, and verifies that a failed completion leaves it in To Do. PGlite queues concurrent requests on one connection; two-connection PostgreSQL lock contention remains a manual integration check. `npm run lint` passed with the two existing `useTaskDraft`/`LocalWorkspace` warnings; the frontend build passed with its existing chunk-size warning. No new dependencies, production writes, registration changes, game-repository edits, commits, pushes or deployments were performed. The existing Git stash remains untouched.
 
 Official references checked for this implementation: [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk), [Codex MCP configuration](https://learn.chatgpt.com/docs/extend/mcp?surface=cli), [Supabase password authentication](https://supabase.com/docs/reference/javascript/auth-signinwithpassword), [Supabase session restoration](https://supabase.com/docs/reference/javascript/auth-setsession), [server-verified user identity](https://supabase.com/docs/reference/javascript/auth-getuser), [database functions and invoker security](https://supabase.com/docs/guides/database/functions), [keyring binding](https://github.com/Brooooooklyn/keyring-node).

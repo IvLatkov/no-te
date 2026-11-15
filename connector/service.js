@@ -15,6 +15,22 @@ export const reportSchema = z.object({
   commitSha: z.string().regex(/^[a-f0-9]{40}$/i).nullable(),
 }).strict()
 
+export const createTaskSchema = z.object({
+  projectId: z.uuid(),
+  title: z.string().trim().min(1).max(200),
+  description: z.string().trim().min(1).max(20000),
+  operationKey: z.uuidv4(),
+}).strict()
+
+const createdTaskSchema = z.object({
+  task_id: z.uuid(), project_id: z.uuid(), title: z.string().min(1), description: z.string(),
+  status: z.enum(['todo', 'done']),
+  created_at: z.iso.datetime({ offset: true }), updated_at: z.iso.datetime({ offset: true }),
+  completed_at: z.iso.datetime({ offset: true }).nullable(), archives_at: z.iso.datetime({ offset: true }).nullable(),
+  replayed: z.boolean(),
+})
+const creationUnconfirmedMessage = 'Task creation was not confirmed. Do not claim the work is tracked. Retry the exact operation key and content; never substitute a new key after an uncertain response.'
+
 export function createService(auth, projectId) {
   const client = auth.client
   async function ownedProject(requestedId) {
@@ -33,6 +49,30 @@ export function createService(auth, projectId) {
   }
   return {
     async listProjects() { return { projects: [await ownedProject(projectId)] } },
+    async createTask(input) {
+      const parsed = createTaskSchema.safeParse(input)
+      if (!parsed.success) fail('INVALID_TASK_INPUT', 'Provide only projectId, a concise title (1–200 characters), description including requested behaviour and acceptance criteria (1–20,000 characters), and a UUID v4 operationKey generated with crypto.randomUUID().')
+      const { projectId: requested, title, description, operationKey } = parsed.data
+      await ownedProject(requested)
+      let response
+      try {
+        response = await client.rpc('no_te_create_task', {
+          p_project_id: projectId, p_title: title, p_description: description, p_operation_key: operationKey,
+        })
+      } catch { fail('CREATION_UNCONFIRMED', creationUnconfirmedMessage) }
+      const { data, error } = response
+      checkDatabase(error, 'creation')
+      const saved = createdTaskSchema.safeParse(data)
+      if (!saved.success || saved.data.project_id !== projectId ||
+          (!saved.data.replayed && (saved.data.status !== 'todo' || saved.data.title !== title || saved.data.description !== description)) ||
+          (saved.data.status === 'todo' && (saved.data.completed_at !== null || saved.data.archives_at !== null)) ||
+          (saved.data.status === 'done' && (!saved.data.replayed || !saved.data.completed_at || !saved.data.archives_at))) {
+        fail('CREATION_UNCONFIRMED', creationUnconfirmedMessage)
+      }
+      return { ...saved.data, message: saved.data.replayed
+        ? 'Original task found; returning its current saved state without changes. Read it and reconcile requirements before proceeding.'
+        : 'Server confirmed the new To Do task. Read its saved requirements and exact revision before implementation.' }
+    },
     async listTasks({ projectId: requested, query = '', offset = 0 }) {
       await ownedProject(requested)
       let request = client.from('task_workflow').select('id,title,status,updated_at,is_archived').eq('project_id', projectId)

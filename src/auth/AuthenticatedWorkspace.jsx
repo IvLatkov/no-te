@@ -6,6 +6,8 @@ import AccountSettings from './AccountSettings'
 import { useAuth } from './useAuth'
 import useCloudProjects from '../hooks/useCloudProjects'
 import useCloudDocumentation from '../hooks/useCloudDocumentation'
+import { readDashboardProject, saveDashboardProject } from '../data/dashboardPreference'
+import { startCloudRefresh } from '../data/cloudRefresh'
 import TagManager from '../components/TagManager'
 import { canOpenSearch } from '../data/search'
 import ProjectsPage from '../components/ProjectsPage'
@@ -53,7 +55,7 @@ export default function AuthenticatedWorkspace() {
     })),
   }))
   const [activePage, setActivePage] = useState('dashboard')
-  const [dashboardProjectId, setDashboardProjectId] = useState(null)
+  const [dashboardProjectId, setDashboardProjectId] = useState(() => readDashboardProject(user.id))
   const [menuOpen, setMenuOpen] = useState(false)
   const [projectId, setProjectId] = useState(null)
   const [projectTab, setProjectTab] = useState('board')
@@ -61,6 +63,17 @@ export default function AuthenticatedWorkspace() {
   const [noteRequest, setNoteRequest] = useState(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const [tagsOpen, setTagsOpen] = useState(false)
+  useEffect(() => startCloudRefresh(store, notesState.store), [store, notesState.store])
+  useEffect(() => {
+    // Wait for a successful owned-project read before invalidating a saved choice.
+    if (!loading && !error && dashboardProjectId && !cloud.projects.some((item) => item.id === dashboardProjectId)) {
+      saveDashboardProject(user.id, null)
+    }
+  }, [cloud.projects, loading, error, dashboardProjectId, user.id])
+  function selectDashboardProject(id) {
+    setDashboardProjectId(id)
+    saveDashboardProject(user.id, id)
+  }
   const project = projects.find((item) => item.id === projectId)
   const modalProject = projects.find((item) => item.id === (modal?.projectId ?? projectId))
   const detailTask = modalProject?.tasks.find((task) => task.id === modal?.task?.id)
@@ -102,6 +115,7 @@ export default function AuthenticatedWorkspace() {
   }
   async function openProject(id) {
     if (busy || notesState.busy || !(await notesState.store.flush())) return false
+    selectDashboardProject(id)
     setActivePage('projects')
     setProjectId(id)
     setProjectTab('board')
@@ -263,7 +277,7 @@ export default function AuthenticatedWorkspace() {
             <Dashboard
               projects={projects}
               selectedProjectId={dashboardProjectId}
-              onSelectProject={setDashboardProjectId}
+              onSelectProject={selectDashboardProject}
               projectsLoading={loading}
               projectsError={error}
               notes={notesState.notes}

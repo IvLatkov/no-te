@@ -21,9 +21,9 @@ export const report = {
   limitations: [], commitSha: null,
 }
 
-test('MCP initializes, exposes exactly four narrow tools and dispatches validated requests', async () => {
+test('MCP initializes, exposes exactly five narrow tools and preserves existing validated requests', async () => {
   const calls = []
-  const service = Object.fromEntries(['listProjects', 'listTasks', 'readTask', 'completeTask'].map(method => [method, async args => { calls.push({ method, args }); return { ok: true } }]))
+  const service = Object.fromEntries(['listProjects', 'listTasks', 'readTask', 'createTask', 'completeTask'].map(method => [method, async args => { calls.push({ method, args }); return { ok: true } }]))
   const server = createServer(service)
   const client = new Client({ name: 'isolated-test', version: '1.0.0' })
   const [a, b] = InMemoryTransport.createLinkedPair()
@@ -31,7 +31,7 @@ test('MCP initializes, exposes exactly four narrow tools and dispatches validate
     await server.connect(a)
     await client.connect(b)
     assert.equal(client.getServerVersion().name, 'no-te')
-    assert.deepEqual((await client.listTools()).tools.map(tool => tool.name).sort(), ['complete_task', 'list_projects', 'list_tasks', 'read_task'])
+    assert.deepEqual((await client.listTools()).tools.map(tool => tool.name).sort(), ['complete_task', 'create_task', 'list_projects', 'list_tasks', 'read_task'])
     await client.callTool({ name: 'list_projects', arguments: {} })
     await client.callTool({ name: 'list_tasks', arguments: { projectId: project, query: 'Duplicate title' } })
     await client.callTool({ name: 'read_task', arguments: { projectId: project, taskId: task } })
@@ -94,7 +94,7 @@ test('real stdio subprocess initializes and returns a project isolation error wi
   const client = new Client({ name: 'stdio-test', version: '1.0.0' })
   try {
     await client.connect(transport)
-    assert.equal((await client.listTools()).tools.length, 4)
+    assert.equal((await client.listTools()).tools.length, 5)
     const result = await client.callTool({ name: 'read_task', arguments: { projectId: other, taskId: task } })
     assert.equal(result.isError, true)
     assert.equal(JSON.parse(result.content[0].text).code, 'PROJECT_NOT_PERMITTED')

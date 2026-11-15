@@ -8,14 +8,7 @@ export default function useCloudProjects(client, userId) {
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot)
   useEffect(() => {
     store.load()
-    const refresh = () => {
-      if (document.visibilityState !== 'hidden') void store.load({ quiet: true })
-    }
-    window.addEventListener('focus', refresh)
-    document.addEventListener('visibilitychange', refresh)
     return () => {
-      window.removeEventListener('focus', refresh)
-      document.removeEventListener('visibilitychange', refresh)
       store.dispose()
     }
   }, [store])

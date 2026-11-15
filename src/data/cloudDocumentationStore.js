@@ -48,14 +48,15 @@ export function createCloudDocumentationStore(client, userId, { delay = 500 } = 
       ...dirty.get(note.id)?.patch,
     }))
   }
-  async function load() {
+  async function load({ quiet = false } = {}) {
     if (!active) return false
+    if (quiet && (locked || draining || dirty.size || snapshot.loading || snapshot.busy)) return false
     if (draining && !(await draining)) return false
     if (!active) return false
     const version = epoch
     const request = ++loadVersion
     const opt = options()
-    publish({ loading: true })
+    if (!quiet) publish({ loading: true })
     try {
       const [notes, folders, tags, links] = await Promise.all([
         api.fetchNotes(opt),
@@ -83,7 +84,7 @@ export function createCloudDocumentationStore(client, userId, { delay = 500 } = 
       if (current(version) && request === loadVersion)
         publish({
           loading: false,
-          readOnly: true,
+          readOnly: quiet ? snapshot.readOnly : true,
           loadError: failure.message,
           error: failure.message,
         })
