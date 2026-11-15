@@ -36,9 +36,9 @@ When I return to a project, I want to find the next task and its explanation so 
 
 ## Interface walkthrough
 
-![Local QA build of No-Te showing sidebar navigation, a project workspace, To Do and Done columns, and documentation](images/dashboard.png)
+![No-Te dashboard showing the WH40k Survivor Game project, To Do and Done columns, and linked implementation documentation](images/Snimka%20zaslona%202026-11-15%20214213.png)
 
-*Existing repository screenshot from a local development build using QA tasks. It predates later archive/filter controls and the empty-dashboard guidance added in this review. It is an implementation capture, not a wireframe, research result or exact representation of every current screen.*
+*Owner-provided dashboard screenshot showing connector test tasks, archive controls and documentation filters. This is an implementation capture, not a wireframe or research result.*
 
 | Region | Design intent | Question to validate |
 | --- | --- | --- |
@@ -47,7 +47,7 @@ When I return to a project, I want to find the next task and its explanation so 
 | Task states | Use plain To Do / Done labels and explicit actions. | Do users need a Doing state, or does a two-state workflow cover their work? |
 | Documentation | Keep reference knowledge accessible after tasks are completed. | Can users explain Task-linked versus Independent without coaching? |
 
-Only the existing QA screenshot is included. A future gallery should capture the current task detail, note editor and narrow-screen navigation using synthetic records after browser verification; those images have not been fabricated.
+The uploaded dashboard screenshot is included. A future gallery should capture the current task detail, note editor and narrow-screen navigation using synthetic records after browser verification; those images have not been fabricated.
 
 ## Process: what exists and what comes next
 
