@@ -179,6 +179,7 @@ export default function AuthenticatedWorkspace() {
         activePage={activePage}
         onNavigate={navigate}
         menuOpen={menuOpen}
+        onMenuChange={setMenuOpen}
         projects={projects}
         selectedProjectId={projectId}
         onOpenProject={openProject}
@@ -186,6 +187,7 @@ export default function AuthenticatedWorkspace() {
       <div className="workspace">
         <header className="workspace-header">
           <button
+            id="navigation-toggle"
             className="menu-toggle"
             type="button"
             aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}

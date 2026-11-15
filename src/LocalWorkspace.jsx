@@ -306,6 +306,7 @@ function AppSession({ initialPage = 'dashboard', feedback, onSessionReset }) {
         activePage={activePage}
         onNavigate={navigate}
         menuOpen={menuOpen}
+        onMenuChange={setMenuOpen}
         projects={projects}
         selectedProjectId={selectedProjectId}
         onOpenProject={openProject}
@@ -313,6 +314,7 @@ function AppSession({ initialPage = 'dashboard', feedback, onSessionReset }) {
       <div className="workspace">
         <header className="workspace-header">
           <button
+            id="navigation-toggle"
             className="menu-toggle"
             type="button"
             aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
