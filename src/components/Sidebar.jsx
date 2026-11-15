@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { NotebookText, Layers, X } from 'lucide-react'
+import { NotebookText, Layers, Search, X } from 'lucide-react'
 
 // Keep this breakpoint aligned with the single drawer query in App.css.
 const drawerQuery = '(max-width: 1100px)'
@@ -13,6 +13,8 @@ export default function Sidebar({
   projects,
   selectedProjectId,
   onOpenProject,
+  onSearch,
+  searchDisabled = false,
 }) {
   const sidebar = useRef(null)
   const [isDrawer, setIsDrawer] = useState(() => window.matchMedia?.(drawerQuery).matches ?? false)
@@ -121,6 +123,22 @@ export default function Sidebar({
           </span>
           <span>No-Te</span>
         </a>
+        <button
+          type="button"
+          className="sidebar-search"
+          aria-label="Open global search"
+          disabled={searchDisabled}
+          onClick={() => {
+            onMenuChange(false)
+            onSearch()
+          }}
+        >
+          <Search size={16} aria-hidden="true" />
+          <span>Search…</span>
+          <kbd aria-hidden="true">
+            {/Mac/i.test(navigator.platform) ? '⌘' : 'Ctrl'} K
+          </kbd>
+        </button>
         <nav aria-label="Main navigation" className="primary-nav">
           {['dashboard', 'projects', 'documentation'].map(navItem)}
         </nav>

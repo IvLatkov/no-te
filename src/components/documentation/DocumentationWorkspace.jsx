@@ -19,6 +19,8 @@ export default function DocumentationWorkspace({
   initialNoteId = null,
   onOpenTask,
   organization,
+  singleNote = false,
+  onExit,
 }) {
   const { notes, store, status, error, readOnly, busy = false } = notesState
   const [selectedId, setSelectedId] = useState(initialNoteId)
@@ -123,7 +125,7 @@ export default function DocumentationWorkspace({
           )}
         </div>
       )}
-      <NotesList
+      {!singleNote && <NotesList
         notes={visible}
         selectedId={selectedId}
         onSelect={select}
@@ -183,7 +185,7 @@ export default function DocumentationWorkspace({
             onDelete={(folder) => setFolderAction({ type: 'delete', folder })}
           />
         }
-      />
+      />}
       {selected ? (
         <NoteEditor
           key={selected.id}
@@ -192,7 +194,8 @@ export default function DocumentationWorkspace({
           store={store}
           status={status}
           readOnly={readOnly}
-          onBack={() => select(null)}
+          onBack={singleNote ? onExit : () => select(null)}
+          backLabel={singleNote ? 'Close note' : 'All notes'}
           onDuplicate={duplicate}
           onDelete={() => setModal('delete')}
           linkedTasks={tasksForNote(projects, selected.id)}
@@ -252,6 +255,7 @@ export default function DocumentationWorkspace({
             if (await store.remove(selected.id)) {
               setSelectedId(null)
               setModal(null)
+              if (singleNote) await onExit()
             }
           }}
         />

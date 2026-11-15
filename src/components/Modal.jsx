@@ -8,6 +8,7 @@ export default function Modal({ title, onClose, children, error, className = '' 
   const titleId = useId()
   useEffect(() => {
     const element = dialog.current
+    const restoreFocus = previousFocus.current
     element.showModal()
     const initialFocus =
       element.querySelector('[data-autofocus], [autofocus]') ||
@@ -17,7 +18,10 @@ export default function Modal({ title, onClose, children, error, className = '' 
     initialFocus?.focus()
     return () => {
       element.close()
-      if (previousFocus.current?.isConnected) previousFocus.current.focus({ preventScroll: true })
+      const target = restoreFocus?.isConnected && !restoreFocus.closest('[hidden], [inert]')
+        ? restoreFocus
+        : document.getElementById('navigation-toggle')
+      target?.focus({ preventScroll: true })
     }
   }, [])
 

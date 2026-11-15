@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { BookOpen, Layers, House, Settings, Menu, X, Search } from 'lucide-react'
+import { BookOpen, Layers, House, Settings, Menu, X } from 'lucide-react'
 import Sidebar from './components/Sidebar'
 import EmptyState from './components/EmptyState'
 import ProjectsPage from './components/ProjectsPage'
@@ -141,6 +141,7 @@ function AppSession({ initialPage = 'dashboard', feedback, onSessionReset }) {
     const shortcut = (event) => {
       if (!storageLocked && canOpenSearch(event, document)) {
         event.preventDefault()
+        setMenuOpen(false)
         setSearchOpen(true)
       }
     }
@@ -310,6 +311,8 @@ function AppSession({ initialPage = 'dashboard', feedback, onSessionReset }) {
         projects={projects}
         selectedProjectId={selectedProjectId}
         onOpenProject={openProject}
+        onSearch={() => setSearchOpen(true)}
+        searchDisabled={storageLocked}
       />
       <div className="workspace">
         <header className="workspace-header">
@@ -325,26 +328,6 @@ function AppSession({ initialPage = 'dashboard', feedback, onSessionReset }) {
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <span className="page-label">{selectedProject?.name ?? page.label}</span>
-          <div className="header-search">
-            <Search size={16} aria-hidden="true" />
-            <input
-              type="search"
-              readOnly
-              disabled={storageLocked}
-              aria-label="Open global search"
-              placeholder="Search…"
-              onClick={() => setSearchOpen(true)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault()
-                  setSearchOpen(true)
-                }
-              }}
-            />
-            <kbd>
-              {typeof navigator !== 'undefined' && /Mac/i.test(navigator.platform) ? '⌘' : 'Ctrl'} K
-            </kbd>
-          </div>
           <span className="workspace-label">
             <span /> Personal workspace
           </span>

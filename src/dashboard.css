@@ -1,5 +1,6 @@
 .main-content.content-dashboard {
   display: flex;
+  flex-direction: column;
   align-items: stretch;
   padding: 28px 30px 60px;
 }
@@ -11,12 +12,286 @@
   min-width: 0;
 }
 
-.dashboard-apps h2 {
-  margin: 0 0 12px;
+.dashboard-controls h2 {
+  margin: 0;
   color: var(--accent-text);
   font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.01em;
+}
+
+.dashboard-controls {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.dashboard-project-options {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 8px);
+  left: 0;
+  width: min(320px, 100%);
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-dialog);
+  box-shadow: 0 12px 32px var(--shadow-color);
+  font-size: 13px;
+}
+
+.dashboard-picker-caption {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.dashboard-project-options ul {
+  max-height: 260px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.dashboard-project-options li button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  padding: 12px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+}
+
+.dashboard-project-options li button:hover,
+.dashboard-project-options li button[aria-pressed='true'] {
+  background: var(--accent-wash);
+  color: var(--accent-text);
+}
+
+.dashboard-project-options li button span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-project-options svg {
+  flex-shrink: 0;
+}
+
+.dashboard-picker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.dashboard-project {
+  min-width: 0;
+  margin-top: 24px;
+}
+
+.dashboard-project-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.dashboard-project-heading > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-project-heading h2 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-project-heading p {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-project-heading > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dashboard-project-panels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.dashboard-panel {
+  min-width: 0;
+  min-height: 200px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-base);
+}
+
+.dashboard-panel h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.dashboard-panel h3 > svg {
+  color: var(--accent-text);
+}
+
+.dashboard-panel-list {
+  display: grid;
+  gap: 8px;
+  max-height: 420px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.dashboard-item {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  min-height: 44px;
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: var(--overlay-subtle);
+  text-align: left;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+
+.dashboard-item:hover {
+  background: var(--accent-wash);
+  border-color: var(--accent-border-soft);
+}
+
+.dashboard-item small {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.dashboard-panel-empty {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.dashboard-note-dialog {
+  width: min(1000px, calc(100% - 24px));
+  max-height: calc(100svh - 24px);
+}
+
+.dashboard-note-dialog > .modal-body {
+  padding: 20px 0 0;
+}
+
+.dashboard-note-dialog > .modal-body > .modal-heading {
+  margin: 0 20px 8px;
+}
+
+.dashboard-note-dialog .documentation-workspace {
+  display: block;
+  min-height: 0;
+}
+
+.dashboard-note-dialog .documentation-workspace > .note-editor {
+  position: static;
+  overflow: visible;
+}
+
+.dashboard-note-dialog .documentation-workspace > .notes-error {
+  position: static;
+}
+
+.dashboard-note-dialog .note-title {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: clamp(25px, 2.5vw, 36px);
+  font-weight: 550;
+}
+
+.dashboard-note-dialog .note-prose input[type='checkbox'] {
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .dashboard-project-panels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-notes {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-project-panels {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.apps-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--accent-border-soft);
+  border-radius: 8px;
+  background: var(--accent-wash);
+  color: var(--accent-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 150ms ease;
+}
+
+.apps-toggle:hover {
+  background: var(--accent-tint-soft);
+}
+
+.apps-toggle[aria-expanded='true'] > svg:last-child {
+  transform: rotate(180deg);
 }
 
 .app-shortcuts {
@@ -31,13 +306,11 @@
 .app-shortcut {
   position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  width: 88px;
-  height: 100%;
-  min-height: 96px;
-  padding: 10px 6px;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 9px;
   border: 1px solid transparent;
   border-radius: 10px;
   background: var(--overlay-subtle);
@@ -60,20 +333,13 @@
 .app-logo {
   display: grid;
   place-items: center;
-  height: 40px;
-  margin-bottom: 6px;
 }
 
 .app-logo img {
   display: block;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
-}
-
-.app-name {
-  font-size: 11px;
-  line-height: 1.35;
 }
 
 .app-launch-notice {
@@ -86,13 +352,6 @@
 
 .app-launch-notice:empty {
   margin: 0;
-}
-
-.dashboard-welcome {
-  display: grid;
-  flex: 1;
-  place-items: center;
-  padding: 60px 0;
 }
 
 @media (max-width: 700px) {

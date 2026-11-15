@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { BookOpen, House, Layers, Menu, Settings, X, Search } from 'lucide-react'
+import { BookOpen, House, Layers, Menu, Settings, X } from 'lucide-react'
 import Sidebar from '../components/Sidebar'
 import Dashboard from '../components/dashboard/Dashboard'
 import AccountSettings from './AccountSettings'
@@ -21,6 +21,7 @@ const DocumentationWorkspace = lazy(
   () => import('../components/documentation/DocumentationWorkspace'),
 )
 const CloudTaskDetails = lazy(() => import('../components/CloudTaskDetails'))
+const DashboardNoteModal = lazy(() => import('../components/dashboard/DashboardNoteModal'))
 const GlobalSearch = lazy(() => import('../components/GlobalSearch'))
 function Deferred({ children }) {
   return <Suspense fallback={<p role="status">Opening workspace…</p>}>{children}</Suspense>
@@ -52,6 +53,7 @@ export default function AuthenticatedWorkspace() {
     })),
   }))
   const [activePage, setActivePage] = useState('dashboard')
+  const [dashboardProjectId, setDashboardProjectId] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [projectId, setProjectId] = useState(null)
   const [projectTab, setProjectTab] = useState('board')
@@ -60,7 +62,8 @@ export default function AuthenticatedWorkspace() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [tagsOpen, setTagsOpen] = useState(false)
   const project = projects.find((item) => item.id === projectId)
-  const detailTask = project?.tasks.find((task) => task.id === modal?.task?.id)
+  const modalProject = projects.find((item) => item.id === (modal?.projectId ?? projectId))
+  const detailTask = modalProject?.tasks.find((task) => task.id === modal?.task?.id)
   const organization = {
     tags: notesState.tags,
     folders: notesState.folders,
@@ -75,6 +78,7 @@ export default function AuthenticatedWorkspace() {
     const shortcut = (event) => {
       if (canOpenSearch(event, document)) {
         event.preventDefault()
+        setMenuOpen(false)
         setSearchOpen(true)
       }
     }
@@ -122,6 +126,19 @@ export default function AuthenticatedWorkspace() {
     setModal({ type: 'task', task })
     return true
   }
+  async function openDashboardTask(id, taskId) {
+    if (busy || notesState.busy || !(await notesState.store.flush())) return false
+    const task = projects.find((item) => item.id === id)?.tasks.find((item) => item.id === taskId)
+    if (!task) return false
+    openModal({ type: 'task', task, projectId: id })
+    return true
+  }
+  async function openDashboardNote(id) {
+    if (busy || notesState.busy || !(await notesState.store.flush())) return false
+    if (!notesState.store.getSnapshot().notes.some((note) => note.id === id)) return false
+    openModal({ type: 'dashboardNote', noteId: id })
+    return true
+  }
   function openModal(value) {
     store.clearMutationError()
     setModal(value)
@@ -140,8 +157,8 @@ export default function AuthenticatedWorkspace() {
   }
   async function saveTask(values) {
     const ok = modal.task
-      ? await run(() => store.updateTask(project.id, modal.task.id, values))
-      : await run(() => store.createTask(project.id, values))
+      ? await run(() => store.updateTask(modalProject.id, modal.task.id, values))
+      : await run(() => store.createTask(modalProject.id, values))
     if (ok && !modal.task) setModal(null)
     return ok
   }
@@ -183,6 +200,7 @@ export default function AuthenticatedWorkspace() {
         projects={projects}
         selectedProjectId={projectId}
         onOpenProject={openProject}
+        onSearch={() => setSearchOpen(true)}
       />
       <div className="workspace">
         <header className="workspace-header">
@@ -198,14 +216,6 @@ export default function AuthenticatedWorkspace() {
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <span className="page-label">{project?.name ?? pages[activePage].label}</span>
-          <button
-            type="button"
-            className="button secondary"
-            aria-label="Open global search"
-            onClick={() => setSearchOpen(true)}
-          >
-            <Search size={16} /> Search
-          </button>
           <span className="workspace-label">
             <span /> Account workspace
           </span>
@@ -249,7 +259,20 @@ export default function AuthenticatedWorkspace() {
           {activePage === 'settings' ? (
             <AccountSettings beforeSignOut={() => notesState.store.flush()} />
           ) : activePage === 'dashboard' ? (
-            <Dashboard />
+            <Dashboard
+              projects={projects}
+              selectedProjectId={dashboardProjectId}
+              onSelectProject={setDashboardProjectId}
+              projectsLoading={loading}
+              projectsError={error}
+              notes={notesState.notes}
+              notesLoading={notesState.loading}
+              notesError={notesState.loadError}
+              onOpenProjects={() => navigate('projects')}
+              onOpenProject={openProject}
+              onOpenTask={openDashboardTask}
+              onOpenNote={openDashboardNote}
+            />
           ) : activePage === 'documentation' ? (
             documentation()
           ) : (
@@ -321,7 +344,7 @@ export default function AuthenticatedWorkspace() {
           <CloudTaskDetails
             key={detailTask.id}
             task={detailTask}
-            project={project}
+            project={modalProject}
             projects={projects}
             notesState={notesState}
             organization={organization}
@@ -329,7 +352,20 @@ export default function AuthenticatedWorkspace() {
             error={mutationError || error}
             onSave={saveTask}
             onClose={closeModal}
-            onOpenNote={openNote}
+            onOpenNote={activePage === 'dashboard' ? openDashboardNote : openNote}
+          />
+        </Deferred>
+      )}
+      {modal?.type === 'dashboardNote' && (
+        <Deferred>
+          <DashboardNoteModal
+            key={modal.noteId}
+            noteId={modal.noteId}
+            notesState={notesState}
+            projects={projects}
+            organization={organization}
+            onOpenTask={openDashboardTask}
+            onClose={closeModal}
           />
         </Deferred>
       )}

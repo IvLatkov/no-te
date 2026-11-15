@@ -20,6 +20,7 @@ export default function NoteEditor({
   status,
   readOnly,
   onBack,
+  backLabel = 'All notes',
   onDuplicate,
   onDelete,
   linkedTasks = [],
@@ -89,7 +90,7 @@ export default function NoteEditor({
     <section className="note-editor" aria-label="Note editor">
       <div className="note-editor-top">
         <button type="button" className="back-button notes-back" onClick={onBack}>
-          <ArrowLeft size={16} /> All notes
+          <ArrowLeft size={16} /> {backLabel}
         </button>
         <span className={`save-status ${status}`} role="status">
           {status === 'saving' ? (
