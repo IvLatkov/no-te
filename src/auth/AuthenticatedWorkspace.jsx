@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { BookOpen, House, Layers, Menu, Settings, X, Search } from 'lucide-react'
 import Sidebar from '../components/Sidebar'
-import EmptyState from '../components/EmptyState'
+import Dashboard from '../components/dashboard/Dashboard'
 import AccountSettings from './AccountSettings'
 import { useAuth } from './useAuth'
 import useCloudProjects from '../hooks/useCloudProjects'
@@ -211,7 +211,7 @@ export default function AuthenticatedWorkspace() {
         <main
           id="main-content"
           tabIndex={-1}
-          className={`main-content${activePage === 'settings' ? ' content-settings' : activePage === 'projects' ? ' content-projects' : activePage === 'documentation' ? ' content-documentation' : ''}`}
+          className={`main-content${activePage === 'settings' ? ' content-settings' : activePage === 'projects' ? ' content-projects' : activePage === 'documentation' ? ' content-documentation' : ' content-dashboard'}`}
         >
           {(error || (!modal && mutationError)) && (
             <div role="alert" className="storage-error">
@@ -247,7 +247,7 @@ export default function AuthenticatedWorkspace() {
           {activePage === 'settings' ? (
             <AccountSettings beforeSignOut={() => notesState.store.flush()} />
           ) : activePage === 'dashboard' ? (
-            <EmptyState page="dashboard" />
+            <Dashboard />
           ) : activePage === 'documentation' ? (
             documentation()
           ) : (
