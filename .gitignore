@@ -38,3 +38,7 @@ supabase/.branches/
 *.dump
 *.sqlite
 *.db
+
+# MCP private configuration belongs outside this repository.
+**/no-te-mcp.private.json
+**/mcp-session*.json
