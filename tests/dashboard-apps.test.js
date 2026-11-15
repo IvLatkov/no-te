@@ -98,8 +98,62 @@ test('dashboard shows Apps without a welcome, protects new tabs and exposes hone
     await ui.click(document.body)
     assert.equal(shortcuts.hidden, true)
     assert.equal(toggle.getAttribute('aria-expanded'), 'false')
+    await ui.click(toggle)
+    const shortcut = document.querySelector('.app-shortcut')
+    shortcut.focus()
+    await ui.act(async () => {
+      shortcut.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    })
+    assert.equal(shortcuts.hidden, true, 'Escape dismisses Apps')
+    assert.equal(toggle.getAttribute('aria-expanded'), 'false')
+    assert.equal(document.activeElement, toggle, 'Focus returns to the Apps toggle')
+    await ui.click(toggle)
+    outside.focus()
+    await ui.act(async () => {
+      outside.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    })
+    assert.equal(shortcuts.hidden, true)
+    assert.equal(document.activeElement, outside, 'Escape does not steal focus from another control')
+    await ui.click(toggle)
+    const dialog = document.createElement('dialog')
+    dialog.setAttribute('open', '')
+    document.body.append(dialog)
+    await ui.act(async () => {
+      dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    })
+    assert.equal(shortcuts.hidden, false, 'An open dialog owns Escape')
+    dialog.remove()
   } finally {
     await ui.close()
+  }
+})
+
+test('dashboard offers a next step without a selection and avoids misleading empty states while loading or in error', async () => {
+  for (const scenario of [
+    { projects: [], heading: 'Start with a project', action: 'Create your first project' },
+    { projects: [{ id: 'one', name: 'Example', tasks: [] }], heading: 'Choose a project', action: 'View projects' },
+    { projectsLoading: true },
+    { projectsError: 'Unavailable' },
+    { projects: [{ id: 'one', name: 'Example', tasks: [] }], selectedProjectId: 'one' },
+  ]) {
+    let opened = 0
+    const { heading, action, ...props } = scenario
+    const ui = await uiHarness('dashboard-start', {
+      module: '/src/components/dashboard/Dashboard.jsx',
+      props: { ...props, onOpenProjects: () => { opened++ } },
+    })
+    try {
+      await ui.mount()
+      if (heading) {
+        assert.equal(document.getElementById('dashboard-start-heading').textContent, heading)
+        await ui.click(ui.byText(action))
+        assert.equal(opened, 1)
+      } else {
+        assert.equal(document.querySelector('.dashboard-start'), null)
+      }
+    } finally {
+      await ui.close()
+    }
   }
 })
 
