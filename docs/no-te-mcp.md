@@ -1,5 +1,12 @@
 # Local No-Te MCP connector (review/setup required)
 
+## Current deployment note — 15 November 2026
+
+The owner has since applied the task-creation migration to the personal deployment and manually verified task creation, read-back, linked implementation documentation and completion. The Godot repository also contains the reviewed implementation workflow. These are checks of the normal live flow, not proof of separate-connection PostgreSQL concurrency.
+
+The rollout notes below retain the implementation-stage context. Their statements that creation was not yet installed refer to that earlier stage; do not reapply existing database migrations merely to update the connector. A new installation still needs its own reviewed backend setup, private configuration and authentication.
+
+
 This is an explicitly requested implementation workflow, not an unattended worker. This extension preserves the existing connection, credentials, repository mappings and Codex registration. Read-only catalog inspection found the existing completion RPC in production; the new creation RPC is not installed there. No production SQL, live task creation, registration or game-repository changes were performed during this extension.
 
 The Node stdio process in `connector/` is separate from Vite: nothing imports it into `src/`, no server credential is included in the frontend, and the frontend behavior is unchanged. New dependencies are pinned: official MCP server/client SDK 2.4.0, Zod 4.6.7, and native OS keyring binding 2.1.2. Use Node 22 or newer compatible with the existing project.
