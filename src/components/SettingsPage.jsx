@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Download, Upload, ShieldCheck, RotateCcw, Database } from 'lucide-react'
 import Modal from './Modal'
+import AppearanceSettings from './AppearanceSettings'
 import {
   createBackup,
   downloadBackup,
@@ -106,6 +107,7 @@ export default function SettingsPage({
           <p>Your workspace, kept in your hands.</p>
         </div>
       </div>
+      <AppearanceSettings />
       {feedback && (
         <p
           className={`data-feedback ${feedback.kind}`}

@@ -350,8 +350,8 @@
   height: 31px;
 }
 .editor-toolbar .is-active {
-  color: var(--accent-text-hover);
-  background: var(--accent-wash);
+  color: var(--text-primary);
+  background: var(--surface-subtle);
 }
 .exit-code-button {
   align-self: center;

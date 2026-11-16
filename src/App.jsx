@@ -2,6 +2,7 @@ import { AuthProvider } from './auth/AuthProvider'
 import { useAuth } from './auth/useAuth'
 import LoginPage from './auth/LoginPage'
 import AuthenticatedWorkspace from './auth/AuthenticatedWorkspace'
+import ThemeProvider from './theme/ThemeProvider'
 import './App.css'
 import './projects.css'
 import './settings.css'
@@ -22,8 +23,10 @@ function AuthGate() {
 
 export default function App({ client, configError }) {
   return (
-    <AuthProvider client={client} configError={configError}>
-      <AuthGate />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider client={client} configError={configError}>
+        <AuthGate />
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

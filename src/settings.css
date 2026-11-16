@@ -7,6 +7,40 @@
   width: 100%;
   margin: 0 auto;
 }
+.theme-control {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  transition: color var(--transition-interactive), border-color var(--transition-interactive), background var(--transition-interactive);
+}
+.theme-toggle:hover {
+  color: var(--color-text);
+  border-color: var(--color-secondary-deep);
+}
+.theme-toggle[aria-checked='true'] {
+  background: var(--color-secondary-tint);
+  border-color: var(--color-secondary-deep);
+  color: var(--color-text);
+}
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle {
+    transition: none;
+  }
+}
 .data-section-heading {
   display: flex;
   align-items: center;

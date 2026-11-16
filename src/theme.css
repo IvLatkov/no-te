@@ -1,0 +1,117 @@
+/* Adapted from the supplied Dusty Blue & Cream stylesheet. Keep page structure
+   in feature stylesheets; these tokens are shared by every application screen. */
+:root,
+[data-theme='light'] {
+  --color-bg: #f5f5f0;
+  --color-surface: #ffffff;
+  --color-surface-offset: #e9ebe6;
+  --color-divider: #d9dad5;
+  --color-border: #c9d6e0;
+  --color-text: #0f172a;
+  --color-text-muted: #334155;
+  --color-text-faint: #64748b;
+  --color-text-inverse: #ffffff;
+  --color-secondary: #9db8c9;
+  --color-secondary-deep: #7b99af;
+  --color-secondary-tint: #e3edf3;
+  --color-primary: #4a6fa5;
+  --color-primary-hover: #3d5c8a;
+  --color-primary-active: #32507c;
+  --color-primary-highlight: #dce6f2;
+  --color-link: #4a6fa5;
+  --color-clay: #b7795f;
+  --color-clay-highlight: #f0e4dc;
+  --hero-bg: #9db8c9;
+  --hero-text: #0f172a;
+  --hero-body: #334155;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.25rem;
+  --shadow-sm: 0 1px 2px oklch(0.25 0.03 250 / 0.05);
+  --shadow-md: 0 4px 14px oklch(0.25 0.03 250 / 0.08);
+  --shadow-lg: 0 12px 32px oklch(0.25 0.03 250 / 0.1);
+  --selection-bg: #4a6fa538;
+  --font-display: 'Zodiak', 'Iowan Old Style', Georgia, serif;
+  --font-body: 'Work Sans', 'Helvetica Neue', Arial, sans-serif;
+  --transition-interactive: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  --overlay-subtle: #9db8c91f;
+  --shadow-color: #0f172a1f;
+  --backdrop: #0f172a4d;
+  --accent-wash: #4a6fa50f;
+  --accent-tint-faint: #4a6fa514;
+  --accent-tint-soft: #4a6fa526;
+  --accent-border-soft: #4a6fa580;
+  --button-secondary-hover: #e3edf3;
+  --danger: #a12f47;
+  --danger-label: #ffffff;
+  --danger-border: #a12f47;
+  --danger-hover: #84253a;
+  --danger-hover-text: #84253a;
+  --danger-hover-background: #fff0f2;
+  --error-background: #fff0f2;
+  --error-text: #922c42;
+  --error-border: #e4bdc5;
+  --success-background: #edf5f0;
+  --success-text: #32634c;
+  --success-border: #abc9b8;
+  --warning-background: #fff7e8;
+  --warning-text: #80551e;
+  --warning-border: #dfc69e;
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --color-bg: #0f172a;
+  --color-surface: #1a2438;
+  --color-surface-offset: #152033;
+  --color-divider: #2a3a55;
+  --color-border: #31435f;
+  --color-text: #f5f5f0;
+  --color-text-muted: #c7d2e0;
+  --color-text-faint: #94a8c0;
+  --color-text-inverse: #0f172a;
+  --color-secondary: #5e7a91;
+  --color-secondary-deep: #7b99af;
+  --color-secondary-tint: #22344c;
+  --color-primary: #7e9bc4;
+  --color-primary-hover: #a3bbd9;
+  --color-primary-active: #5b7ba6;
+  --color-primary-highlight: #2a3c58;
+  /* Lift links separately from CTA fills: ~9.8:1 on the slate canvas. */
+  --color-link: #a8c3d9;
+  --color-clay: #c99a83;
+  --color-clay-highlight: #3a2f2a;
+  --hero-bg: #43596e;
+  --hero-text: #f5f5f0;
+  --hero-body: #f5f5f0;
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.25);
+  --shadow-md: 0 4px 14px oklch(0 0 0 / 0.35);
+  --shadow-lg: 0 12px 32px oklch(0 0 0 / 0.45);
+  --selection-bg: #7e9bc440;
+  --overlay-subtle: #a8c3d90f;
+  --shadow-color: #00000059;
+  --backdrop: #00000099;
+  --accent-wash: #7e9bc414;
+  --accent-tint-faint: #7e9bc41a;
+  --accent-tint-soft: #7e9bc42b;
+  --accent-border-soft: #7e9bc480;
+  --button-secondary-hover: #2a3c58;
+  --danger: #f0a8b6;
+  --danger-label: #0f172a;
+  --danger-border: #f0a8b6;
+  --danger-hover: #f6bdc8;
+  --danger-hover-text: #f6bdc8;
+  --danger-hover-background: #382332;
+  --error-background: #382332;
+  --error-text: #f0b5c1;
+  --error-border: #875466;
+  --success-background: #1c322c;
+  --success-text: #b9d8c3;
+  --success-border: #4d7761;
+  --warning-background: #332c24;
+  --warning-text: #ebd2b3;
+  --warning-border: #8a6a45;
+  color-scheme: dark;
+}

@@ -40,7 +40,7 @@
   justify-content: center;
   gap: 8px;
   padding: 10px 15px;
-  border-radius: 7px;
+  border-radius: var(--radius-md);
   font-size: 13px;
   font-weight: 500;
   border: 1px solid transparent;
@@ -65,7 +65,7 @@
 .danger {
   background: var(--danger);
   border-color: var(--danger-border);
-  color: var(--text-on-solid);
+  color: var(--danger-label);
 }
 .danger:hover {
   background: var(--danger-hover);
@@ -83,7 +83,8 @@ button:disabled {
   min-width: 0;
   border: 1px solid var(--border);
   background: var(--surface-base);
-  border-radius: 11px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 .project-card:hover {
@@ -231,7 +232,7 @@ button:disabled {
 .board-column {
   min-height: 280px;
   border: 1px solid var(--border);
-  border-radius: 11px;
+  border-radius: var(--radius-lg);
   background: var(--background);
   padding: 16px;
 }
@@ -260,7 +261,7 @@ button:disabled {
   border-radius: 50%;
 }
 .status-dot.todo {
-  background: var(--accent-text);
+  background: var(--color-secondary-deep);
 }
 .status-dot.done {
   background: var(--secondary);
@@ -280,7 +281,8 @@ button:disabled {
 }
 .task-card {
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
   background: var(--surface-base);
   padding: 16px 16px 10px;
   cursor: grab;

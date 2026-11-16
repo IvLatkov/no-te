@@ -171,7 +171,7 @@
   min-height: 200px;
   padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--background);
 }
 
@@ -208,7 +208,8 @@
   min-height: 44px;
   padding: 12px;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
   background: var(--surface-base);
   text-align: left;
   overflow-wrap: anywhere;
@@ -310,10 +311,10 @@
   gap: 12px;
   min-height: 40px;
   padding: 8px 12px;
-  border: 1px solid var(--accent-border-soft);
-  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   background: var(--surface-base);
-  color: var(--accent-text);
+  color: var(--text-primary);
   font: inherit;
   font-size: 14px;
   font-weight: 500;
@@ -321,8 +322,9 @@
 }
 
 .apps-toggle:hover {
-  background: var(--accent-tint-soft);
-  color: var(--accent-text-hover);
+  background: var(--surface-subtle);
+  border-color: var(--color-secondary-deep);
+  color: var(--text-primary);
 }
 
 .apps-toggle[aria-expanded='true'] > svg:last-child {

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from './useAuth'
 import { testDatabaseConnection } from '../lib/connectionTest'
 import CloudBackupSettings from '../components/CloudBackupSettings'
+import AppearanceSettings from '../components/AppearanceSettings'
 
 export default function AccountSettings({ beforeSignOut }) {
   const { client, user, signOut } = useAuth()
@@ -52,9 +53,10 @@ export default function AccountSettings({ beforeSignOut }) {
       <div className="section-heading">
         <div>
           <h1 id="settings-heading">Settings</h1>
-          <p>Your account and database connection.</p>
+          <p>Your appearance, account and database connection.</p>
         </div>
       </div>
+      <AppearanceSettings />
       <section className="data-management-row" aria-labelledby="account-heading">
         <div>
           <h2 id="account-heading">Account</h2>
