@@ -1,5 +1,6 @@
 import { ArrowLeft, Pencil, Trash2 } from 'lucide-react'
 import TaskBoard from './TaskBoard'
+import AppIcon from './AppIcon'
 
 export default function ProjectWorkspace({
   project,
@@ -48,7 +49,7 @@ export default function ProjectWorkspace({
           aria-pressed={activeTab === 'board'}
           onClick={() => onTabChange('board')}
         >
-          Task board
+          <AppIcon name="projects" size={24} /> Task board
         </button>
         <button
           type="button"
@@ -56,7 +57,7 @@ export default function ProjectWorkspace({
           aria-pressed={activeTab === 'documentation'}
           onClick={() => onTabChange('documentation')}
         >
-          Documentation
+          <AppIcon name="documentation" size={24} /> Documentation
         </button>
       </div>
       {activeTab === 'documentation' ? (

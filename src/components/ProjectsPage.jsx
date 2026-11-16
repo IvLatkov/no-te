@@ -1,4 +1,5 @@
-import { Layers, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
+import AppIcon from './AppIcon'
 import ProjectCard from './ProjectCard'
 
 export default function ProjectsPage({ projects, onOpen, onCreate, onEdit, onDelete, readOnly }) {
@@ -28,7 +29,7 @@ export default function ProjectsPage({ projects, onOpen, onCreate, onEdit, onDel
         </div>
       ) : (
         <div className="projects-empty">
-          <Layers size={34} strokeWidth={1.5} />
+          <AppIcon name="projects" size={48} />
           <h2>A fresh start</h2>
           <p>Create your first project to start organizing your tasks.</p>
         </div>

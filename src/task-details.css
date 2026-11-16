@@ -9,7 +9,7 @@
   cursor: pointer;
 }
 .task-card-open:hover h3 {
-  color: #d5b9ff;
+  color: var(--accent-text);
 }
 .task-details-modal {
   width: min(650px, calc(100% - 32px));
@@ -19,7 +19,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 18px;
-  color: #a89ab9;
+  color: var(--text-secondary);
   font-size: 12px;
   margin: -6px 0 25px;
 }
@@ -33,7 +33,7 @@
   align-items: center;
   gap: 5px;
   font-size: 10px;
-  color: #a5b8ad;
+  color: var(--success-text);
   flex-shrink: 0;
 }
 .task-status-field {
@@ -47,11 +47,11 @@
 }
 .task-status-field select,
 .link-filter select {
-  color: #d0bfec;
+  color: var(--text-secondary);
   padding: 8px 11px;
   border: 1px solid var(--border-strong);
   border-radius: 6px;
-  background: #22202d;
+  background: var(--surface-base);
   font: inherit;
   font-size: 12px;
 }
@@ -66,7 +66,7 @@
 .task-section-heading h3,
 .task-implementation h3 {
   margin: 0;
-  color: #dfd5ee;
+  color: var(--text-primary);
   font-size: 13px;
   font-weight: 550;
 }
@@ -81,12 +81,12 @@
   gap: 4px;
   background: transparent;
   border: 0;
-  color: #b89ae5;
+  color: var(--accent-text);
   padding: 3px 0;
   font-size: 11px;
 }
 .text-action:hover {
-  color: #d3b3ff;
+  color: var(--accent-text);
 }
 .task-documentation {
   border-top: 1px solid var(--border);
@@ -94,7 +94,7 @@
   margin-top: 8px;
 }
 .task-section-empty {
-  color: #a297ae;
+  color: var(--text-secondary);
   font-size: 12px;
   line-height: 1.7;
   padding: 14px;
@@ -111,8 +111,8 @@
   align-items: center;
   gap: 7px;
   padding: 4px 7px 4px 12px;
-  background: #8b5cf60a;
-  border: 1px solid #8b5cf62a;
+  background: var(--accent-wash);
+  border: 1px solid var(--accent-border-soft);
   border-radius: 7px;
 }
 .linked-note-open {
@@ -125,7 +125,7 @@
   text-align: left;
   background: transparent;
   border: 0;
-  color: #c8b0ec;
+  color: var(--accent-text);
   font-size: 12px;
 }
 .linked-note-open span {
@@ -142,7 +142,7 @@
 }
 .task-implementation > p {
   font-size: 11px;
-  color: #a499b1;
+  color: var(--text-secondary);
   margin: 9px 0 13px;
 }
 .task-implementation textarea {
@@ -156,7 +156,7 @@
   flex-wrap: wrap;
   gap: 8px 20px;
   font-size: 10px;
-  color: #a195ad;
+  color: var(--text-secondary);
   line-height: 1.7;
 }
 .visually-hidden {
@@ -206,13 +206,13 @@
   align-items: flex-start;
   padding: 14px;
   margin: 0;
-  background: #15151d;
-  border: 1px solid #302a3c;
+  background: var(--surface-base);
+  border: 1px solid var(--border);
   border-radius: 7px;
   cursor: pointer;
 }
 .link-picker-note:has(input:checked) {
-  border-color: #8b5cf670;
+  border-color: var(--accent-border-soft);
   background: var(--accent-wash);
 }
 .modal .link-picker-note > input {
@@ -232,7 +232,7 @@
   font-size: 13px;
   line-height: 1.5;
   font-weight: 500;
-  color: #d9cde9;
+  color: var(--text-primary);
   overflow-wrap: anywhere;
 }
 .link-picker-note .link-note-preview {
@@ -240,12 +240,12 @@
   margin-top: 6px;
   font-size: 11px;
   line-height: 1.6;
-  color: #a99bb9;
+  color: var(--text-secondary);
   overflow-wrap: anywhere;
 }
 .link-picker-note small {
   display: block;
-  color: #a38bbf;
+  color: var(--text-secondary);
   font-size: 10px;
   margin-top: 8px;
   overflow-wrap: anywhere;
@@ -255,20 +255,20 @@
 }
 .note-linked-tasks {
   margin-top: 22px;
-  border: 1px solid #302938;
+  border: 1px solid var(--border);
   border-radius: 7px;
-  background: #19171f;
+  background: var(--surface-base);
 }
 .note-linked-tasks summary {
   font-size: 11px;
-  color: #b3a1c9;
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 11px 13px;
 }
 .note-linked-tasks summary span {
   display: inline-block;
   margin-left: 5px;
-  color: #a58ac3;
+  color: var(--text-secondary);
 }
 .note-backlinks {
   padding: 0 8px 8px;
@@ -277,7 +277,7 @@
 }
 .note-backlinks > p {
   font-size: 11px;
-  color: #a395b4;
+  color: var(--text-secondary);
   margin: 8px;
 }
 .note-backlink {
@@ -287,7 +287,7 @@
   padding: 10px 8px;
   width: 100%;
   text-align: left;
-  color: #c6b5de;
+  color: var(--text-secondary);
   background: transparent;
   border: 1px solid transparent;
   border-radius: 5px;
@@ -310,7 +310,7 @@
   display: block;
   font-size: 10px;
   margin-top: 5px;
-  color: #a48dbd;
+  color: var(--text-secondary);
   overflow-wrap: anywhere;
 }
 .backlink-status {
@@ -318,7 +318,7 @@
   display: flex;
 }
 .backlink-status.done {
-  color: #8ab29b;
+  color: var(--success-text);
 }
 @media (max-width: 700px) {
   .task-details-modal {

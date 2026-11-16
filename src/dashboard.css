@@ -172,7 +172,7 @@
   padding: 16px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--surface-base);
+  background: var(--background);
 }
 
 .dashboard-panel h3 {
@@ -185,7 +185,7 @@
 }
 
 .dashboard-panel h3 > svg {
-  color: var(--accent-text);
+  color: var(--secondary);
 }
 
 .dashboard-panel-list {
@@ -207,12 +207,16 @@
   width: 100%;
   min-height: 44px;
   padding: 12px;
-  border: 1px solid transparent;
+  border: 1px solid var(--border);
   border-radius: 7px;
-  background: var(--overlay-subtle);
+  background: var(--surface-base);
   text-align: left;
   overflow-wrap: anywhere;
   font-size: 13px;
+}
+
+.dashboard-item > span {
+  color: var(--text-primary);
 }
 
 .dashboard-item:hover {
@@ -308,7 +312,7 @@
   padding: 8px 12px;
   border: 1px solid var(--accent-border-soft);
   border-radius: 8px;
-  background: var(--accent-wash);
+  background: var(--surface-base);
   color: var(--accent-text);
   font: inherit;
   font-size: 14px;
@@ -318,6 +322,7 @@
 
 .apps-toggle:hover {
   background: var(--accent-tint-soft);
+  color: var(--accent-text-hover);
 }
 
 .apps-toggle[aria-expanded='true'] > svg:last-child {

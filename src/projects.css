@@ -82,12 +82,12 @@ button:disabled {
 .project-card {
   min-width: 0;
   border: 1px solid var(--border);
-  background: #191a22;
+  background: var(--surface-base);
   border-radius: 11px;
   overflow: hidden;
 }
 .project-card:hover {
-  border-color: #8b5cf663;
+  border-color: var(--accent-border-soft);
 }
 .project-open {
   display: block;
@@ -101,11 +101,11 @@ button:disabled {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: #ad87fc;
+  color: var(--secondary);
   margin-bottom: 22px;
 }
 .project-card-top > svg:last-child {
-  color: #777484;
+  color: var(--text-secondary);
 }
 .project-open h2 {
   font-size: 17px;
@@ -149,11 +149,11 @@ button:disabled {
   background: transparent;
   border: 1px solid transparent;
   border-radius: 6px;
-  color: #a6a1b3;
+  color: var(--text-secondary);
 }
 .icon-button:hover {
   color: var(--accent-text-hover);
-  background: #8b5cf615;
+  background: var(--accent-wash);
 }
 .delete-action:hover {
   color: var(--danger-hover-text);
@@ -164,13 +164,13 @@ button:disabled {
   text-align: center;
   color: var(--muted);
 }
-.projects-empty > svg {
-  color: var(--accent-text);
+.projects-empty > .app-icon {
+  margin-inline: auto;
 }
 .projects-empty h2 {
   margin: 20px 0 10px;
   font-size: 20px;
-  color: #d8d4e3;
+  color: var(--text-primary);
   font-weight: 500;
 }
 .projects-empty p {
@@ -209,13 +209,13 @@ button:disabled {
   gap: 8px;
   padding: 0;
   border: 0;
-  color: #a9a2b9;
+  color: var(--text-secondary);
   background: transparent;
   margin-bottom: 26px;
   font-size: 12px;
 }
 .back-button:hover {
-  color: #b998ff;
+  color: var(--accent-text);
 }
 .project-description {
   white-space: pre-wrap;
@@ -232,12 +232,12 @@ button:disabled {
   min-height: 280px;
   border: 1px solid var(--border);
   border-radius: 11px;
-  background: var(--surface-base);
+  background: var(--background);
   padding: 16px;
 }
 .board-column.drag-over {
   border-color: var(--accent);
-  background: #8b5cf60f;
+  background: var(--accent-wash);
 }
 .column-heading {
   display: flex;
@@ -263,11 +263,11 @@ button:disabled {
   background: var(--accent-text);
 }
 .status-dot.done {
-  background: #6fba9b;
+  background: var(--secondary);
 }
 .task-count {
-  background: #ffffff07;
-  color: #9f99ad;
+  background: var(--overlay-subtle);
+  color: var(--text-secondary);
   border-radius: 5px;
   padding: 3px 7px;
   font-size: 11px;
@@ -279,9 +279,9 @@ button:disabled {
   align-content: start;
 }
 .task-card {
-  border: 1px solid #30313c;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--surface-raised);
+  background: var(--surface-base);
   padding: 16px 16px 10px;
   cursor: grab;
 }
@@ -298,14 +298,14 @@ button:disabled {
 }
 .task-card p {
   font-size: 12px;
-  color: #aaa5b6;
+  color: var(--text-secondary);
   line-height: 1.7;
   margin: 7px 0 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 .task-card.is-done h3 {
-  color: #b7b1c3;
+  color: var(--text-primary);
 }
 .task-actions {
   display: flex;
@@ -317,7 +317,7 @@ button:disabled {
   display: inline-flex;
   gap: 6px;
   align-items: center;
-  color: #b398e6;
+  color: var(--accent-text);
   font-size: 11px;
   background: transparent;
   border: 0;
@@ -328,7 +328,7 @@ button:disabled {
 }
 .column-empty {
   text-align: center;
-  color: #8f899f;
+  color: var(--text-secondary);
   font-size: 12px;
   padding: 35px 10px;
   line-height: 1.7;
@@ -337,14 +337,14 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 7px;
-  color: #a39aac;
+  color: var(--text-secondary);
   background: transparent;
   border: 0;
   padding: 12px 4px 2px;
   font-size: 12px;
 }
 .add-task:hover {
-  color: #c6a4ff;
+  color: var(--accent-text);
 }
 .modal {
   padding: 0;
@@ -357,7 +357,7 @@ button:disabled {
   box-shadow: 0 20px 90px var(--shadow-color);
 }
 .modal::backdrop {
-  background: #090a10b8;
+  background: var(--backdrop);
   backdrop-filter: blur(4px);
 }
 .modal-body {
@@ -379,11 +379,11 @@ button:disabled {
 .modal label {
   display: block;
   font-size: 12px;
-  color: #d1cadc;
+  color: var(--text-secondary);
   margin-bottom: 9px;
 }
 .modal label span {
-  color: #90899c;
+  color: var(--text-secondary);
 }
 .modal input,
 .modal textarea {
@@ -409,7 +409,7 @@ button:disabled {
 }
 .modal input::placeholder,
 .modal textarea::placeholder {
-  color: #837b91;
+  color: var(--text-secondary);
 }
 .modal-actions {
   display: flex;
@@ -420,7 +420,7 @@ button:disabled {
 .confirmation-message {
   font-size: 14px;
   line-height: 1.7;
-  color: #b4adbf;
+  color: var(--text-secondary);
   overflow-wrap: anywhere;
 }
 .storage-error {
