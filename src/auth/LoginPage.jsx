@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NotebookText } from 'lucide-react'
+import AppIcon from '../components/AppIcon'
 import { useAuth } from './useAuth'
 
 export default function LoginPage() {
@@ -23,7 +23,7 @@ export default function LoginPage() {
   return (
     <main className="auth-screen">
       <section className="auth-panel" aria-labelledby="login-heading">
-        <NotebookText className="auth-mark" size={44} aria-hidden="true" />
+        <AppIcon name="brand" className="auth-mark" size={64} />
         <h1 id="login-heading">Sign in to No-Te</h1>
         <p className="auth-description">Your quiet space for projects and notes.</p>
         {configError && (

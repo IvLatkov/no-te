@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { NotebookText, Layers, Search, X } from 'lucide-react'
+import { Search, X } from 'lucide-react'
+import AppIcon from './AppIcon'
 
 // Keep this breakpoint aligned with the single drawer query in App.css.
 const drawerQuery = '(max-width: 1100px)'
@@ -83,7 +84,9 @@ export default function Sidebar({
         aria-current={activePage === id ? 'page' : undefined}
         onClick={() => onNavigate(id)}
       >
-        <Icon size={23} strokeWidth={1.7} aria-hidden="true" />
+        {['dashboard', 'projects', 'documentation'].includes(id)
+          ? <AppIcon name={id} />
+          : <Icon size={23} strokeWidth={1.7} aria-hidden="true" />}
         <span>{label}</span>
       </button>
     )
@@ -119,7 +122,7 @@ export default function Sidebar({
           aria-label="No-Te home"
         >
           <span className="brand-mark">
-            <NotebookText size={28} strokeWidth={1.8} aria-hidden="true" />
+            <AppIcon name="brand" size={44} />
           </span>
           <span>No-Te</span>
         </a>
@@ -154,7 +157,7 @@ export default function Sidebar({
                 onClick={() => onOpenProject(project.id)}
                 title={project.name}
               >
-                <Layers size={17} aria-hidden="true" />
+                <AppIcon name="projects" size={24} />
                 <span>{project.name}</span>
               </button>
             ))}
