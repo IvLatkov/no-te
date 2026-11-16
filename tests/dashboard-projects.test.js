@@ -32,6 +32,41 @@ async function choose(ui, name) {
   await ui.waitFor(() => document.querySelector('#dashboard-project-heading')?.textContent === name)
 }
 
+test('dashboard Add task keeps the selected project, preserves failed drafts and creates in To Do without navigating', async () => {
+  const { db, projects } = seed()
+  const ui = await uiHarness('dashboard-create-task', { module: '/src/App.jsx', props: { client: db, configError: '' } })
+  try {
+    await ui.mount()
+    await ui.waitFor(() => document.querySelector('.dashboard-project-options li'))
+    await choose(ui, 'Release')
+    const todo = () => document.querySelector('[aria-labelledby="dashboard-todo"]')
+    await ui.click(ui.byText('Add task', todo()))
+    await ui.waitFor(() => document.querySelector('#task-title'))
+    await ui.input(document.querySelector('#task-title'), 'Created on dashboard')
+    await ui.input(document.querySelector('#task-description'), 'Keep this draft on failure')
+    db.failure = (call) => call.table === 'tasks' && call.op === 'insert' ? new TypeError('Failed to fetch') : null
+    await ui.submit()
+    await ui.waitFor(() => document.querySelector('dialog [role="alert"]'))
+    assert.equal(document.querySelector('#task-title').value, 'Created on dashboard')
+    assert.ok(!db.tasks.some(task => task.title === 'Created on dashboard'))
+    db.failure = null
+    await ui.submit()
+    await ui.waitFor(() => !document.querySelector('dialog'))
+    assert.equal(document.querySelector('.page-label').textContent, 'Dashboard')
+    assert.equal(document.querySelector('#dashboard-project-heading').textContent, 'Release')
+    assert.match(todo().textContent, /Created on dashboard/)
+    assert.equal(todo().querySelector('.task-count').textContent, '2')
+    const saved = db.tasks.find(task => task.title === 'Created on dashboard')
+    assert.equal(saved.project_id, projects[0].id)
+    assert.equal(saved.status, 'todo')
+    await choose(ui, 'Another project')
+    await ui.click(ui.byText('Add task', todo()))
+    await ui.click(ui.byText('Cancel', document.querySelector('dialog')))
+    assert.equal(document.querySelector('#dashboard-project-heading').textContent, 'Another project')
+    assert.ok(!document.querySelector('dialog'))
+  } finally { await ui.close() }
+})
+
 test('dashboard restores the last project after remount, isolates accounts and remembers Hide project', async () => {
   const { db } = seed()
   const ui = await uiHarness('dashboard-persisted-selection', { module: '/src/App.jsx', props: { client: db, configError: '' } })

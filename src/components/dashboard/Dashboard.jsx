@@ -17,6 +17,7 @@ export default function Dashboard({
   onOpenProjects,
   onOpenProject,
   onOpenTask,
+  onCreateTask,
   onOpenNote,
   onRestoreTask,
   readOnly,
@@ -140,6 +141,7 @@ export default function Dashboard({
           notesError={notesError}
           onOpenProject={onOpenProject}
           onOpenTask={onOpenTask}
+          onCreateTask={onCreateTask}
           onOpenNote={onOpenNote}
           onRestoreTask={onRestoreTask}
           readOnly={readOnly}

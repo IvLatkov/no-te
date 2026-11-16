@@ -1,4 +1,4 @@
-import { ArrowUpRight, BookOpen } from 'lucide-react'
+import { ArrowUpRight, BookOpen, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { activeTasks, archiveLabel } from '../../data/taskWorkflow'
 import { filterDocumentation, tasksForNote } from '../../data/taskDocumentation'
@@ -11,6 +11,7 @@ export default function DashboardProjectPanels({
   notesError,
   onOpenProject,
   onOpenTask,
+  onCreateTask,
   onOpenNote,
   onRestoreTask,
   readOnly,
@@ -37,11 +38,16 @@ export default function DashboardProjectPanels({
           return (
             <section className="dashboard-panel" key={column.id} aria-labelledby={`dashboard-${column.id}`}>
               <div className="dashboard-panel-heading">
-              <h3 id={`dashboard-${column.id}`}>
-                <span className={`status-dot ${column.id}`} aria-hidden="true" />
-                {column.title}<span className="task-count">{tasks.length}</span>
-              </h3>
-              {column.id === 'done' && <button type="button" className="text-action dashboard-archive-action" onClick={() => setArchiveOpen(true)}>Archived</button>}
+                <h3 id={`dashboard-${column.id}`}>
+                  <span className={`status-dot ${column.id}`} aria-hidden="true" />
+                  {column.title}<span className="task-count">{tasks.length}</span>
+                </h3>
+                {column.id === 'todo' && (
+                  <button type="button" className="text-action dashboard-add-task" disabled={readOnly || !onCreateTask} onClick={() => onCreateTask(project.id)}>
+                    <Plus size={14} aria-hidden="true" /> Add task
+                  </button>
+                )}
+                {column.id === 'done' && <button type="button" className="text-action dashboard-archive-action" onClick={() => setArchiveOpen(true)}>Archived</button>}
               </div>
               <ul className="dashboard-panel-list">
                 {tasks.map((task) => (

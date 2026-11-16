@@ -286,6 +286,7 @@ export default function AuthenticatedWorkspace() {
               onOpenProjects={() => navigate('projects')}
               onOpenProject={openProject}
               onOpenTask={openDashboardTask}
+              onCreateTask={(id) => openModal({ type: 'task', projectId: id })}
               onOpenNote={openDashboardNote}
               onRestoreTask={(id, taskId) => run(() => store.moveTask(id, taskId, 'todo'))}
               readOnly={readOnly}
