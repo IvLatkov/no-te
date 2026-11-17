@@ -16,9 +16,9 @@ The current user is me. This repository demonstrates a working product and expla
 
 The deployed application requires sign-in. Public demo credentials are not provided; the source and screenshot below are available without an account.
 
-![No-Te dashboard showing the WH40k Survivor Game project, completed tasks and linked documentation](docs/images/Snimka%20zaslona%202026-11-15%20214213.png)
+![No-Te dashboard](docs/images/no-te_dashboard.png)
 
-*Dashboard showing the WH40k Survivor Game project, completed connector test tasks and linked implementation documentation.*
+*The current No-Te dashboard.*
 
 ## Why I built it
 
