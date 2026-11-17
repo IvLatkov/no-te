@@ -68,7 +68,7 @@ Decisions and Implementation
 
 ## Run locally
 
-Use a recent Node.js version compatible with the lockfile; local validation used Node 24.
+Use Node.js 24 or a version compatible with the lockfile.
 
 ```sh
 git clone https://github.com/IvLatkov/no-te.git
@@ -76,26 +76,11 @@ cd no-te
 npm ci
 ```
 
-Copy `.env.example` to `.env.local` and set your own Supabase project URL and **publishable** key:
+Copy `.env.example` to `.env.local`, set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` for your Supabase project, then run `npm run dev`.
 
-```dotenv
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_public_key
-```
+A working workspace needs the matching private database setup; a fresh clone does not create it. Never use secret/service-role keys in the frontend. See [task workflow requirements](docs/task-workflow.md) and the optional [local connector setup](docs/no-te-mcp.md).
 
-Then start Vite and open the URL printed in the terminal:
-
-```sh
-npm run dev
-```
-
-**Database prerequisite:** this public repository is not a complete Supabase bootstrap. Database SQL, credentials and private configuration are intentionally excluded. A working authenticated workspace needs the matching tables, ownership policies, workflow view and server functions. See [task workflow requirements](docs/task-workflow.md) and [connector setup](docs/no-te-mcp.md). A fresh clone alone does not create that backend or give access to my account.
-
-Only a publishable key belongs in the frontend. Secret/service-role keys, database passwords and connector session credentials must stay out of Git and Vite environment variables. Publishable keys identify the application; database grants and row-level security enforce data access.
-
-For the optional local connector, follow the [MCP setup guide](docs/no-te-mcp.md). Its private repository/project mappings and saved authentication remain outside the repository. It does not run as part of Cloudflare Pages.
-
-## Testing and evidence
+## Testing
 
 ```sh
 npm test
@@ -103,11 +88,7 @@ npm run lint
 npm run build
 ```
 
-**Portfolio review validation, 15 November 2026:** see the [verification record](docs/portfolio-verification.md) for the current public-checkout results, skipped private SQL checks and existing lint/build warnings. The earlier 164-pass result came from a configured development environment with private fixtures; it is not the result of running a fresh public checkout.
-
-The suites cover authentication UI, account isolation, project/task operations, autosave failure recovery, documentation links, archive boundaries, backup validation, dashboard persistence and external updates. See [dashboard behavior tests](tests/dashboard-projects.test.js), [refresh tests](tests/cloud-refresh.test.js), [documentation tests](tests/cloud-documentation.test.js) and [connector creation tests](tests/mcp-task-creation.test.js).
-
-Browser interaction tests use mocked cloud responses. SQL integration tests use isolated PostgreSQL fixtures and require the private migration files; they skip when those files are absent from a public checkout. Neither type alone proves production authorization is correct. Live connector creation, read-back, linked documentation and completion were also manually verified; separate-connection PostgreSQL concurrency remains a further integration check.
+SQL integration tests require private migration files and skip when those files are absent. Detailed results, dated validation runs and verification limits are in the [verification record](docs/portfolio-verification.md).
 
 ## Current progress and limitations
 
