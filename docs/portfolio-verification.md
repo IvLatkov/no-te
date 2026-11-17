@@ -33,3 +33,36 @@ Eight SQL integration checks skip because the public repository excludes the pri
 - Run the private SQL suites in their configured environment and verify live authorization separately before making production/security claims.
 
 This is a dated verification record, not a security certification, usability-study result or guarantee about later commits.
+
+## Later local validation — 17 November 2026
+
+The configured No-Te development workspace passed **198 tests, with zero failures
+or skips**, including nine focused connector document-editing tests. `npm run lint`
+passed with the existing React ref-access and effect-dependency warnings;
+`npm run build` passed with the existing warning about a minified chunk exceeding
+500 kB. These are previously observed results, not a new run for this README edit.
+
+That workspace included private isolated SQL fixtures and locally implemented
+connector changes that were pending publication. The result does not describe
+the current public checkout, a fresh installation or production verification.
+The new document-editing migration, category mapping and live end-to-end
+verification were still pending at the time of this run.
+
+## Coverage and evidence boundaries
+
+The application suites cover authentication UI, account isolation, project/task
+operations, autosave failure recovery, documentation links, archive boundaries,
+backup validation, dashboard preferences and external refreshes. Useful entry
+points are [dashboard tests](../tests/dashboard-projects.test.js),
+[refresh tests](../tests/cloud-refresh.test.js),
+[documentation tests](../tests/cloud-documentation.test.js) and
+[connector task-creation tests](../tests/mcp-task-creation.test.js).
+
+Local connector editing tests additionally exercise exact revisions,
+owner/project isolation, retry safety, lost responses and transactional rollback.
+Browser interaction tests use mocked cloud responses. SQL tests use isolated
+PGlite and private migration files; they skip when those files are absent.
+Neither establishes production authorization or separate-connection PostgreSQL
+concurrency. Earlier live connector creation, read-back, linked documentation and
+completion were manually verified; those checks do not verify the newer editing
+extension. Keep dated runs separate rather than treating one count as universal.
