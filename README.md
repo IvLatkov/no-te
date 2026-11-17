@@ -45,7 +45,7 @@ Development is AI-assisted. I use Codex to generate and revise code, propose tes
 
 My work includes reproducing issues, supplying screenshots and error output, checking fixes in the browser, reviewing changes with AI assistance, and managing GitHub, Supabase and Cloudflare setup. Examples include investigating note-editor startup failures, correcting sidebar overlap, verifying persistence after reload, and testing the create-task → linked-documentation → Done workflow end to end.
 
-Useful starting points for a technical conversation:
+Decisions and Implementation
 
 | Decision | Reason and implementation |
 | --- | --- |
