@@ -41,7 +41,7 @@ This is also a practical learning project: taking an idea through UI design, a w
 
 I define the requirements, decide which workflows belong in the product, direct implementation, test the behavior and prioritize fixes. I use the application for my own projects and compare the implemented result with the original request.
 
-Development is substantially AI-assisted. I use Codex to generate and revise code, propose tests, investigate failures and help review changes. AI also helped prepare this documentation. I do not present this repository as entirely handwritten code or treat an AI-generated explanation as proof that a feature works.
+Development is AI-assisted. I use Codex to generate and revise code, propose tests, investigate failures and help review changes.
 
 My work includes reproducing issues, supplying screenshots and error output, checking fixes in the browser, reviewing changes with AI assistance, and managing GitHub, Supabase and Cloudflare setup. Examples include investigating note-editor startup failures, correcting sidebar overlap, verifying persistence after reload, and testing the create-task → linked-documentation → Done workflow end to end.
 
