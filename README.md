@@ -18,7 +18,7 @@ The deployed application requires sign-in. Public demo credentials are not provi
 
 ![No-Te dashboard](docs/images/no-te_dashboard.png)
 
-*The current No-Te dashboard.*
+*Dashboard showing the WH40k Survivor Game project.*
 
 ## Why I built it
 
