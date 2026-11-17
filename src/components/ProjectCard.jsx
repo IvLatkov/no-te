@@ -1,5 +1,4 @@
-import { ArrowUpRight, Pencil, Trash2 } from 'lucide-react'
-import AppIcon from './AppIcon'
+import { ArrowUpRight, Layers, Pencil, Trash2 } from 'lucide-react'
 
 export default function ProjectCard({ project, onOpen, onEdit, onDelete, readOnly }) {
   return (
@@ -11,7 +10,7 @@ export default function ProjectCard({ project, onOpen, onEdit, onDelete, readOnl
         aria-label={`Open project ${project.name}`}
       >
         <div className="project-card-top">
-          <AppIcon name="projects" />
+          <Layers size={23} aria-hidden="true" />
           <ArrowUpRight size={17} />
         </div>
         <h2>{project.name}</h2>

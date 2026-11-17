@@ -165,9 +165,6 @@ button:disabled {
   text-align: center;
   color: var(--muted);
 }
-.projects-empty > .app-icon {
-  margin-inline: auto;
-}
 .projects-empty h2 {
   margin: 20px 0 10px;
   font-size: 20px;
