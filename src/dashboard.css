@@ -219,6 +219,18 @@
 .dashboard-item > span {
   color: var(--text-primary);
 }
+.dashboard-task-item {
+  position: relative;
+  min-width: 0;
+}
+.dashboard-task-item.has-delete .dashboard-item {
+  padding-right: 48px;
+}
+.dashboard-task-delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
 
 .dashboard-item:hover {
   background: var(--accent-wash);
@@ -249,10 +261,55 @@
 .dashboard-note-dialog {
   width: min(1000px, calc(100% - 24px));
   max-height: calc(100svh - 24px);
+  max-width: calc(100vw - 24px);
+  overflow: hidden;
+}
+.dashboard-note-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.dashboard-note-dialog:has(.note-editor.is-wide) {
+  width: min(1480px, calc(100% - 24px));
 }
 
 .dashboard-note-dialog > .modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   padding: 20px 0 0;
+}
+.document-resize-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding: 4px 8px 4px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-dialog);
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.document-resize-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: nwse-resize;
+  touch-action: none;
+}
+.document-resize-handle:hover {
+  background: var(--surface-subtle);
+}
+.document-resize-handle:focus-visible {
+  outline-offset: -2px;
+}
+.dashboard-note-dialog.is-resizing {
+  user-select: none;
 }
 
 .dashboard-note-dialog > .modal-body > .modal-heading {

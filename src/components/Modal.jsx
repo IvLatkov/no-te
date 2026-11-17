@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef } from 'react'
 import { X } from 'lucide-react'
 
-export default function Modal({ title, onClose, children, error, className = '' }) {
+export default function Modal({ title, onClose, children, error, className = '', footer }) {
   const dialog = useRef(null)
   // Capture before children's autoFocus runs during the commit phase.
   const previousFocus = useRef(typeof document === 'undefined' ? null : document.activeElement)
@@ -52,6 +52,7 @@ export default function Modal({ title, onClose, children, error, className = '' 
         )}
         {children}
       </div>
+      {footer}
     </dialog>
   )
 }

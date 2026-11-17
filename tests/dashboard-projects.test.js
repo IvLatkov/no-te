@@ -32,6 +32,44 @@ async function choose(ui, name) {
   await ui.waitFor(() => document.querySelector('#dashboard-project-heading')?.textContent === name)
 }
 
+test('dashboard Done deletion confirms, preserves the task on failure/cancel, and keeps notes after a scoped retry', async () => {
+  const { db, projects } = seed()
+  const completed = db.tasks.find(task => task.title === 'Shipped feature')
+  db.task_notes.push({ task_id: completed.id, note_id: db.notes[0].id })
+  const savedNotes = structuredClone(db.notes)
+  const ui = await uiHarness('dashboard-delete-done', { module: '/src/App.jsx', props: { client: db, configError: '' } })
+  try {
+    await ui.mount()
+    await ui.waitFor(() => document.querySelector('.dashboard-project-options li'))
+    await choose(ui, 'Release')
+    const done = () => document.querySelector('[aria-labelledby="dashboard-done"]')
+    const remove = () => ui.byLabel('Delete completed task Shipped feature', done())
+    assert.equal(document.querySelector('[aria-labelledby="dashboard-todo"] .dashboard-task-delete'), null)
+    await ui.click(remove())
+    await ui.waitFor(() => document.querySelector('dialog'))
+    assert.match(document.querySelector('dialog').textContent, /Delete task.*Notes will be kept/s)
+    assert.equal(document.querySelector('#task-title'), null, 'Delete must not open task details')
+    await ui.click(ui.byText('Cancel', document.querySelector('dialog')))
+    assert.ok(db.tasks.some(task => task.id === completed.id))
+    await ui.click(remove())
+    db.failure = call => call.table === 'tasks' && call.op === 'delete' ? new TypeError('Failed to fetch') : null
+    await ui.click(ui.byText('Delete', document.querySelector('dialog')))
+    await ui.waitFor(() => document.querySelector('dialog [role="alert"]'))
+    assert.ok(db.tasks.some(task => task.id === completed.id))
+    assert.equal(done().querySelector('.task-count').textContent, '1')
+    db.failure = null
+    await ui.click(ui.byText('Delete', document.querySelector('dialog')))
+    await ui.waitFor(() => !document.querySelector('dialog'))
+    assert.equal(done().querySelector('.task-count').textContent, '0')
+    assert.match(done().textContent, /No completed tasks yet/)
+    assert.equal(document.querySelector('.page-label').textContent, 'Dashboard')
+    assert.equal(document.querySelector('#dashboard-project-heading').textContent, projects[0].name)
+    assert.ok(!db.tasks.some(task => task.id === completed.id))
+    assert.ok(db.tasks.some(task => task.project_id === projects[1].id))
+    assert.deepEqual(db.notes, savedNotes)
+  } finally { await ui.close() }
+})
+
 test('dashboard Add task keeps the selected project, preserves failed drafts and creates in To Do without navigating', async () => {
   const { db, projects } = seed()
   const ui = await uiHarness('dashboard-create-task', { module: '/src/App.jsx', props: { client: db, configError: '' } })

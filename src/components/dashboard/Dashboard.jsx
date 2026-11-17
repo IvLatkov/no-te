@@ -20,6 +20,7 @@ export default function Dashboard({
   onCreateTask,
   onOpenNote,
   onRestoreTask,
+  onDeleteTask,
   readOnly,
 }) {
   const [appsOpen, setAppsOpen] = useState(false)
@@ -144,6 +145,7 @@ export default function Dashboard({
           onCreateTask={onCreateTask}
           onOpenNote={onOpenNote}
           onRestoreTask={onRestoreTask}
+          onDeleteTask={onDeleteTask}
           readOnly={readOnly}
           projects={projects}
         />

@@ -1,4 +1,4 @@
-import { ArrowUpRight, BookOpen, Plus } from 'lucide-react'
+import { ArrowUpRight, BookOpen, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { activeTasks, archiveLabel } from '../../data/taskWorkflow'
 import { filterDocumentation, tasksForNote } from '../../data/taskDocumentation'
@@ -14,6 +14,7 @@ export default function DashboardProjectPanels({
   onCreateTask,
   onOpenNote,
   onRestoreTask,
+  onDeleteTask,
   readOnly,
   projects = [project],
 }) {
@@ -51,12 +52,22 @@ export default function DashboardProjectPanels({
               </div>
               <ul className="dashboard-panel-list">
                 {tasks.map((task) => (
-                  <li key={task.id}>
+                  <li key={task.id} className={`dashboard-task-item${column.id === 'done' ? ' has-delete' : ''}`}>
                     <button type="button" className="dashboard-item" onClick={() => onOpenTask(project.id, task.id)} aria-label={`Open task ${task.title}`}>
                       <span>{task.title}</span>
                       {task.description && <small>{task.description}</small>}
                       {task.status === 'done' && <small className="archive-countdown">{archiveLabel(task)}</small>}
                     </button>
+                    {column.id === 'done' && (
+                      <button
+                        type="button"
+                        className="icon-button delete-action dashboard-task-delete"
+                        aria-label={`Delete completed task ${task.title}`}
+                        title="Delete completed task"
+                        disabled={readOnly || !onDeleteTask}
+                        onClick={() => onDeleteTask(project.id, task)}
+                      ><Trash2 size={15} aria-hidden="true" /></button>
+                    )}
                   </li>
                 ))}
               </ul>

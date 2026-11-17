@@ -1,6 +1,7 @@
 import StarterKit from '@tiptap/starter-kit'
 import { TaskList, TaskItem } from '@tiptap/extension-list'
 import { getSchema } from '@tiptap/core'
+import { DocumentNavigation } from './documentNavigation.js'
 
 let schema
 // Preflight avoids the editor's invalid-content fallback logging source JSON.
@@ -59,5 +60,6 @@ export function editorExtensions() {
     }),
     TaskList,
     TaskItem.configure({ nested: true }),
+    DocumentNavigation,
   ]
 }

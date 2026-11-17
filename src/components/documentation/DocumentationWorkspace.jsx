@@ -22,6 +22,7 @@ export default function DocumentationWorkspace({
   singleNote = false,
   onExit,
   taskLinksAvailable = true,
+  onWidthChange,
 }) {
   const { notes, store, status, error, readOnly, busy = false } = notesState
   const [selectedId, setSelectedId] = useState(initialNoteId)
@@ -209,6 +210,7 @@ export default function DocumentationWorkspace({
           onOpenTask={onOpenTask}
           organization={organization}
           onMetadataChange={updateMetadata}
+          onWidthChange={onWidthChange}
         />
       ) : (
         <section className="notes-editor-empty">

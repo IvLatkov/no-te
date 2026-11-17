@@ -224,6 +224,7 @@
   font-size: 13px;
 }
 .note-editor {
+  container: note-editor / inline-size;
   background: var(--surface-base);
   min-width: 0;
   display: flex;
@@ -231,11 +232,15 @@
 }
 .note-editor-top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 17px;
   min-height: 62px;
   padding: 12px 24px;
+}
+.note-editor-top .card-actions {
+  flex-wrap: wrap;
 }
 .notes-back {
   display: none;
@@ -368,6 +373,7 @@
   background: var(--accent-tint-faint);
 }
 .note-writing-area {
+  min-width: 0;
   padding: 30px clamp(20px, 4vw, 62px) 80px;
   flex: 1;
   cursor: text;
@@ -613,5 +619,151 @@
 @media (prefers-reduced-motion: reduce) {
   .save-status.saving svg {
     animation: none;
+  }
+}
+
+.note-reading-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  flex: 1;
+  min-width: 0;
+}
+.note-reading-layout.has-navigation {
+  grid-template-columns: minmax(0, 1fr) 220px;
+}
+.note-document-navigation {
+  position: sticky;
+  top: 16px;
+  min-width: 0;
+  max-height: min(70svh, 680px);
+  padding: 16px;
+  overflow-y: auto;
+  border-left: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.note-document-navigation[hidden] {
+  display: none;
+}
+.note-navigation-heading,
+.note-search-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.note-navigation-heading {
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.note-document-navigation h3 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+.note-document-search {
+  display: grid;
+  gap: 8px;
+}
+.note-document-find {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px 12px;
+  margin-top: 16px;
+  font-size: 12px;
+}
+.note-title-area .note-document-search {
+  display: grid;
+  margin: 0;
+}
+.note-document-find .note-search-controls {
+  margin: 0;
+  min-height: 36px;
+}
+.note-document-find > .note-outline-empty {
+  grid-column: 1 / -1;
+}
+.note-document-search input {
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  background: var(--surface-input);
+  color: var(--text-primary);
+  font: inherit;
+  margin: 0;
+}
+@media (max-width: 500px) {
+  .note-document-find {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.note-document-search input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.note-search-controls {
+  margin: 8px 0 20px;
+}
+.note-search-controls > span {
+  flex: 1;
+  font-size: 11px;
+}
+.note-document-navigation ul {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.note-document-navigation li button {
+  width: 100%;
+  padding: 7px 5px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.note-document-navigation li button:hover {
+  color: var(--text-primary);
+  background: var(--surface-subtle);
+}
+.note-document-navigation .toc-level-2 { padding-left: 12px; }
+.note-document-navigation .toc-level-3 { padding-left: 24px; }
+.note-outline-empty {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.7;
+}
+.note-search-match {
+  background: var(--selection-background);
+}
+.note-search-match.is-current {
+  box-shadow: inset 0 0 0 1px var(--accent);
+  border-radius: 2px;
+}
+.documentation-workspace:has(> .note-editor.is-wide),
+.project-workspace > .documentation-workspace:has(> .note-editor.is-wide) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.documentation-workspace:has(> .note-editor.is-wide) > .notes-panel {
+  display: none;
+}
+.note-editor.is-wide .notes-back {
+  display: inline-flex;
+}
+@container note-editor (max-width: 760px) {
+  .note-reading-layout.has-navigation {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .note-document-navigation {
+    position: static;
+    grid-row: 1;
+    max-height: 240px;
+    border-left: 0;
+    border-bottom: 1px solid var(--border);
   }
 }

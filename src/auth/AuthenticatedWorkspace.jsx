@@ -180,7 +180,7 @@ export default function AuthenticatedWorkspace() {
     const deletingProject = modal.type === 'deleteProject'
     const ok = deletingProject
       ? await run(() => store.deleteProject(modal.project.id))
-      : await run(() => store.deleteTask(project.id, modal.task.id))
+      : await run(() => store.deleteTask(modal.projectId ?? projectId, modal.task.id))
     if (ok) {
       if (deletingProject && modal.project.id === projectId) setProjectId(null)
       setModal(null)
@@ -289,6 +289,7 @@ export default function AuthenticatedWorkspace() {
               onCreateTask={(id) => openModal({ type: 'task', projectId: id })}
               onOpenNote={openDashboardNote}
               onRestoreTask={(id, taskId) => run(() => store.moveTask(id, taskId, 'todo'))}
+              onDeleteTask={(id, task) => openModal({ type: 'deleteTask', projectId: id, task })}
               readOnly={readOnly}
             />
           ) : activePage === 'documentation' ? (
