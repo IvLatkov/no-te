@@ -3,6 +3,32 @@ import { useAuth } from './useAuth'
 import { testDatabaseConnection } from '../lib/connectionTest'
 import CloudBackupSettings from '../components/CloudBackupSettings'
 import AppearanceSettings from '../components/AppearanceSettings'
+import { PREFLIGHT_KEY, RECOVERY_KEY, USER_DATA_KEYS } from '../data/storageSafety'
+
+function hasLegacyWorkspaceData() {
+  try {
+    const storage = globalThis.localStorage
+    if (!storage) return false
+    if ([PREFLIGHT_KEY, RECOVERY_KEY].some(key => storage.getItem(key) !== null)) return true
+
+    return USER_DATA_KEYS.some(key => {
+      const raw = storage.getItem(key)
+      if (raw === null) return false
+      try {
+        const data = JSON.parse(raw)
+        if (Array.isArray(data)) return data.length > 0
+        if (data && typeof data === 'object') {
+          return Object.values(data).some(value => !Array.isArray(value) || value.length > 0)
+        }
+        return true
+      } catch {
+        return true
+      }
+    })
+  } catch {
+    return false
+  }
+}
 
 export default function AccountSettings({ beforeSignOut }) {
   const { client, user, signOut } = useAuth()
@@ -103,15 +129,17 @@ export default function AccountSettings({ beforeSignOut }) {
         )}
       </div>
       <CloudBackupSettings client={client} userId={user.id} beforeExport={beforeSignOut} disabled={signingOut} onBusyChange={setBackupBusy} />
-      <section className="local-quarantine" aria-labelledby="legacy-heading">
-        <h2 id="legacy-heading">Local-only browser content</h2>
-        <p>
-          Existing projects, tasks, documentation, folders, tags, links, and backups remain in this
-          browser. They are quarantined and are not assigned to this account, displayed, uploaded,
-          or reset. The local workspace and its backup tools are preserved separately. No browser
-          data migration is needed for this fresh cloud workspace.
-        </p>
-      </section>
+      {hasLegacyWorkspaceData() && (
+        <section className="local-quarantine" aria-labelledby="legacy-heading">
+          <h2 id="legacy-heading">Local-only browser content</h2>
+          <p>
+            Existing projects, tasks, documentation, folders, tags, links, and backups remain in this
+            browser. They are quarantined and are not assigned to this account, displayed, uploaded,
+            or reset. The local workspace and its backup tools are preserved separately. No browser
+            data migration is needed for this fresh cloud workspace.
+          </p>
+        </section>
+      )}
     </section>
   )
 }
