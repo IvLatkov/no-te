@@ -138,7 +138,7 @@ export default function Sidebar({
           </kbd>
         </button>
         <nav aria-label="Main navigation" className="primary-nav">
-          {['dashboard', 'projects', 'documentation'].map(navItem)}
+          {['dashboard', 'projects'].map(navItem)}
         </nav>
         <section className="projects-section" aria-labelledby="projects-heading">
           <h2 id="projects-heading">Your projects</h2>

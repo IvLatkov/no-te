@@ -1,3 +1,4 @@
+import { openDocumentation } from './helpers/documentationNavigation.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { getSchema } from '@tiptap/core'
@@ -76,7 +77,7 @@ async function openEditor(db, cacheName) {
   await createDocumentationApi(db, 'alice').createNote({ title: 'Reading tools', content })
   const ui = await uiHarness(cacheName, { module: '/src/App.jsx', props: { client: db, configError: '' } })
   await ui.mount()
-  await ui.click(ui.byText('Documentation', document.querySelector('.primary-nav')))
+  await openDocumentation(ui)
   await ui.waitFor(() => document.querySelector('.note-card'))
   await ui.click(document.querySelector('.note-card'))
   await ui.waitFor(() => ui.editor())
@@ -143,7 +144,7 @@ test('outline and matches update after editing, autosave and reload without pers
     await ui.click(ui.byText('Projects', document.querySelector('.primary-nav')))
     await ui.waitFor(() => document.querySelector('.projects-page'))
     assert.deepEqual(db.notes[0].content, edited)
-    await ui.click(ui.byText('Documentation', document.querySelector('.primary-nav')))
+    await openDocumentation(ui)
     await ui.waitFor(() => document.querySelector('.note-card'))
     await ui.click(document.querySelector('.note-card'))
     await ui.waitFor(() => ui.editor())

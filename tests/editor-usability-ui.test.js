@@ -1,3 +1,4 @@
+import { openDocumentation } from './helpers/documentationNavigation.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { uiHarness } from './helpers/uiHarness.js'
@@ -14,7 +15,7 @@ async function openEditor(client, content, cacheName) {
     props: { client, configError: '' },
   })
   await ui.mount()
-  await ui.click(document.querySelectorAll('.primary-nav button')[2])
+  await openDocumentation(ui)
   await ui.waitFor(() => document.querySelector('.note-card'))
   await ui.click(document.querySelector('.note-card'))
   await ui.waitFor(() => ui.editor())
@@ -110,7 +111,7 @@ test('cloud JSONB key ordering does not reset the cursor or editor history', asy
           item.textContent.includes('Loading'),
         ),
     )
-    await ui.click(document.querySelectorAll('.primary-nav button')[2])
+    await openDocumentation(ui)
     await ui.click(document.querySelector('.note-card'))
     await ui.waitFor(() => ui.editor())
     // A save response (not a remount) must be structurally compared to the live document.
@@ -341,7 +342,7 @@ test('formatting and code exit autosave and reload with the same rich text', asy
     assert.equal(db.notes[0].content.content[0].content[0].attrs.checked, true)
     const saved = structuredClone(db.notes[0].content)
     await ui.mount()
-    await ui.click(document.querySelectorAll('.primary-nav button')[2])
+    await openDocumentation(ui)
     await ui.waitFor(() => document.querySelector('.note-card'))
     await ui.click(document.querySelector('.note-card'))
     await ui.waitFor(() => ui.editor())

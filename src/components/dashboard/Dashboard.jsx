@@ -15,6 +15,7 @@ export default function Dashboard({
   notesLoading = false,
   notesError = '',
   onOpenProjects,
+  onOpenDocumentation,
   onOpenProject,
   onOpenTask,
   onCreateTask,
@@ -144,11 +145,23 @@ export default function Dashboard({
           onOpenTask={onOpenTask}
           onCreateTask={onCreateTask}
           onOpenNote={onOpenNote}
+          onOpenDocumentation={onOpenDocumentation}
           onRestoreTask={onRestoreTask}
           onDeleteTask={onDeleteTask}
           readOnly={readOnly}
           projects={projects}
         />
+      )}
+      {(!selectedProject || projectsLoading) && onOpenDocumentation && (
+        <section className="dashboard-library" aria-labelledby="dashboard-library-heading">
+          <div className="dashboard-panel-heading">
+            <h2 id="dashboard-library-heading">Documentation</h2>
+            <button type="button" className="text-action all-documentation-action" onClick={onOpenDocumentation}>
+              All documentation
+            </button>
+          </div>
+          <p>Browse notes from every project, including unassigned notes.</p>
+        </section>
       )}
     </div>
   )

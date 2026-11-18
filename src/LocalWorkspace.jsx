@@ -378,7 +378,7 @@ function AppSession({ initialPage = 'dashboard', feedback, onSessionReset }) {
               organization={organization}
             />
           ) : activePage !== 'projects' ? (
-            <EmptyState key={activePage} page={activePage} {...page} />
+            <EmptyState key={activePage} page={activePage} {...page} onOpenDocumentation={() => navigate('documentation')} />
           ) : selectedProject ? (
             <ProjectWorkspace
               project={selectedProject}

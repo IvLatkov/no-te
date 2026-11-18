@@ -1,3 +1,4 @@
+import { openDocumentation } from './helpers/documentationNavigation.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { uiHarness } from './helpers/uiHarness.js'
@@ -61,7 +62,7 @@ const unfiled = () =>
   )
 async function open(ui) {
   await ui.mount()
-  await ui.click(document.querySelectorAll('.primary-nav button')[2])
+  await openDocumentation(ui)
   await ui.waitFor(() => card('Source note'))
 }
 function transfer() {
@@ -149,7 +150,7 @@ test('native note dragging moves between nested/general/project folders and Unfi
       legacy,
     )
     await ui.mount()
-    await ui.click(document.querySelectorAll('.primary-nav button')[2])
+    await openDocumentation(ui)
     await ui.waitFor(() => folder('General'))
     await ui.click(ui.byText('General', document.querySelector('.folder-tree')))
     assert.ok(card('Source note'))

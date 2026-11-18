@@ -1,6 +1,6 @@
 import { NotebookText } from 'lucide-react'
 
-export default function EmptyState({ page, label, icon: Icon, description }) {
+export default function EmptyState({ page, label, icon: Icon, description, onOpenDocumentation }) {
   const dashboard = page === 'dashboard'
   const PageIcon = dashboard ? NotebookText : Icon
   return (
@@ -16,6 +16,11 @@ export default function EmptyState({ page, label, icon: Icon, description }) {
         )}
       </h1>
       <p>{dashboard ? 'Your space for project notes, tasks and documentation.' : description}</p>
+      {dashboard && onOpenDocumentation && (
+        <button type="button" className="text-action all-documentation-action" onClick={onOpenDocumentation}>
+          All documentation
+        </button>
+      )}
       {!dashboard && <span className="coming-soon">Coming soon</span>}
     </section>
   )

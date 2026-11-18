@@ -1,3 +1,4 @@
+import { openDocumentation } from './helpers/documentationNavigation.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { uiHarness } from './helpers/uiHarness.js'
@@ -48,7 +49,7 @@ test('Settings exports locally, previews without writes, cancels safely and rest
     await input(document.getElementById('task-detail-title'), 'Changed after export')
     await input(document.getElementById('task-implementation'), 'Different implementation notes after export')
     await click(byText('Done', document.querySelector('.task-details-modal')))
-    await click(document.querySelector('.primary-nav button:nth-child(3)'))
+    await openDocumentation({ click, waitFor })
     await waitFor(() => document.querySelector('.note-card'))
     await click([...document.querySelectorAll('.note-card')].find(card => card.textContent.includes('Saved architecture')))
     await waitFor(() => editor())

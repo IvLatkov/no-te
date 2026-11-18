@@ -1,3 +1,4 @@
+import { openDocumentation } from './helpers/documentationNavigation.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { uiHarness } from './helpers/uiHarness.js'
@@ -88,7 +89,7 @@ test('folder and tag UI preserves notes, applies combined filters, cleans refere
     const dialog = () => [...document.querySelectorAll('dialog')].at(-1)
     const foldersNav = () => document.querySelector('.folder-tree')
     await ui.mount()
-    await click(document.querySelector('.primary-nav button:nth-child(3)'))
+    await openDocumentation({ click, waitFor })
     await waitFor(() => foldersNav())
     await click(byLabel('New folder'))
     await input(document.getElementById('folder-name'), 'A folder')
@@ -215,7 +216,7 @@ test('folder and tag UI preserves notes, applies combined filters, cleans refere
     assert.equal(projects()[0].tasks[0].status, 'done')
     assert.deepEqual(projects()[0].tasks.map(task => task.id), orderBefore)
     assert.ok(document.getElementById('column-done').closest('.board-column').querySelector('.task-card'))
-    await click(document.querySelector('.primary-nav button:nth-child(3)'))
+    await openDocumentation({ click, waitFor })
     await waitFor(() => document.querySelector('.notes-panel'))
     await select(document.querySelector('[aria-label="Filter notes by project"]'), a.id)
     await click(byText('Unfiled', foldersNav()))
@@ -235,7 +236,7 @@ test('folder and tag UI preserves notes, applies combined filters, cleans refere
     await submit()
     assert.equal(org().folders.find(folder => folder.id === generalId).projectId, null, 'rename keeps a general folder general under a project filter')
     await ui.mount()
-    await click(document.querySelector('.primary-nav button:nth-child(3)'))
+    await openDocumentation({ click, waitFor })
     await waitFor(() => foldersNav())
     assert.ok(byText('General renamed', foldersNav()))
     assert.equal(org().tags.length, 2)
@@ -257,7 +258,7 @@ test('organization read errors preserve old data and quota failures keep forms a
     localStorage.setItem(ORGANIZATION_KEY, '{invalid')
     await ui.mount()
     assert.match(document.body.textContent, /Saved data has been preserved/)
-    await click(document.querySelector('.primary-nav button:nth-child(3)'))
+    await openDocumentation({ click, waitFor })
     await waitFor(() => document.querySelector('.note-card'))
     assert.equal(byLabel('New folder').disabled, true)
     assert.equal(localStorage.getItem(ORGANIZATION_KEY), '{invalid')
@@ -267,7 +268,7 @@ test('organization read errors preserve old data and quota failures keep forms a
     const data = { version: 1, folders: [{ id: 'folder', name: 'Preserved folder', projectId: project.id, parentFolderId: null, createdAt: timestamp, updatedAt: timestamp }], tags: [{ id: 'tag', name: 'Preserved tag', color: TAG_COLORS[0].value }] }
     localStorage.setItem(ORGANIZATION_KEY, JSON.stringify(data))
     await ui.mount()
-    await click(document.querySelector('.primary-nav button:nth-child(3)'))
+    await openDocumentation({ click, waitFor })
     await waitFor(() => document.querySelector('.folder-tree'))
     const dialog = () => [...document.querySelectorAll('dialog')].at(-1)
     const originalSetItem = ui.dom.window.Storage.prototype.setItem

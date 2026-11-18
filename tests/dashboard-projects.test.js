@@ -32,6 +32,36 @@ async function choose(ui, name) {
   await ui.waitFor(() => document.querySelector('#dashboard-project-heading')?.textContent === name)
 }
 
+test('dashboard library entry opens every project and unassigned notes without a sidebar item or data writes', async () => {
+  const { db } = seed()
+  const before = JSON.stringify([db.projects, db.tasks, db.notes, db.task_notes])
+  const ui = await uiHarness('dashboard-library-entry', { module: '/src/App.jsx', props: { client: db, configError: '' } })
+  try {
+    await ui.mount()
+    await ui.waitFor(() => document.querySelector('.all-documentation-action'))
+    assert.equal(document.querySelectorAll('.primary-nav button').length, 2)
+    assert.equal(document.querySelector('.dashboard-project-panels'), null)
+    await ui.click(ui.byText('All documentation'))
+    await ui.waitFor(() => document.querySelector('.note-card'))
+    assert.equal(document.querySelector('.page-label').textContent, 'Documentation')
+    assert.equal(document.querySelectorAll('.note-card').length, 3)
+    assert.match(document.querySelector('.notes-list').textContent, /General note/)
+    await ui.click(document.querySelector('.primary-nav button'))
+    await choose(ui, 'Release')
+    const panel = document.querySelector('[aria-labelledby="dashboard-documentation"]')
+    assert.match(panel.textContent, /Release guide/)
+    assert.doesNotMatch(panel.textContent, /Other guide|General note/)
+    await ui.click(ui.byText('All documentation', panel))
+    await ui.waitFor(() => document.querySelectorAll('.note-card').length === 3)
+    assert.equal(document.querySelector('[aria-label="Filter notes by project"]').value, 'all')
+    await ui.click(document.querySelector('.primary-nav button'))
+    await ui.waitFor(() => document.querySelector('#dashboard-project-heading'))
+    assert.equal(document.querySelector('#dashboard-project-heading').textContent, 'Release')
+    assert.equal(JSON.stringify([db.projects, db.tasks, db.notes, db.task_notes]), before)
+    assert.ok(db.calls.every(call => call.op === 'select'))
+  } finally { await ui.close() }
+})
+
 test('dashboard Done deletion confirms, preserves the task on failure/cancel, and keeps notes after a scoped retry', async () => {
   const { db, projects } = seed()
   const completed = db.tasks.find(task => task.title === 'Shipped feature')

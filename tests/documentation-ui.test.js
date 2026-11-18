@@ -1,3 +1,4 @@
+import { openDocumentation } from './helpers/documentationNavigation.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { JSDOM } from 'jsdom'
@@ -58,7 +59,7 @@ test('documentation UI integrates CRUD, editor toolbar, checklists, navigation s
     const savedNotes = () => JSON.parse(localStorage.getItem(NOTES_STORAGE_KEY) || '[]')
     const editor = () => document.querySelector('.note-prose')?.editor
 
-    await click(document.querySelector('.primary-nav button:nth-child(3)'))
+    await openDocumentation({ click, waitFor })
     await waitFor(() => document.querySelector('.notes-panel'))
     assert.match(document.querySelector('.notes-editor-empty').textContent, /Choose a note/)
     await click(byText('New Note'))
@@ -106,7 +107,7 @@ test('documentation UI integrates CRUD, editor toolbar, checklists, navigation s
     const originalId = savedNotes()[0].id
     assert.match(noteText(savedNotes()[0].content), /Searchable project knowledge/)
 
-    await click(document.querySelector('.primary-nav button:nth-child(3)'))
+    await openDocumentation({ click, waitFor })
     await waitFor(() => document.querySelector('.note-card'))
     await click(document.querySelector('.note-card'))
     await waitFor(() => editor())
@@ -145,7 +146,7 @@ test('documentation UI integrates CRUD, editor toolbar, checklists, navigation s
     assert.equal(savedNotes().length, 3)
     assert.equal(savedNotes().every(note => note.projectId === null), true)
 
-    await click(document.querySelector('.primary-nav button:nth-child(3)'))
+    await openDocumentation({ click, waitFor })
     await waitFor(() => document.querySelector('.note-card'))
     await click([...document.querySelectorAll('.note-card')].find(card => card.textContent.includes('(copy)')))
     await waitFor(() => editor())
@@ -160,7 +161,7 @@ test('documentation UI integrates CRUD, editor toolbar, checklists, navigation s
     await act(async () => root.unmount())
     root = createRoot(document.getElementById('root'))
     await act(async () => root.render(React.createElement(App)))
-    await click(document.querySelector('.primary-nav button:nth-child(3)'))
+    await openDocumentation({ click, waitFor })
     await waitFor(() => document.querySelector('.note-card'))
     assert.equal(document.querySelectorAll('.note-card').length, 2, 'a new application instance restores saved notes')
     await click([...document.querySelectorAll('.note-card')].find(card => card.textContent.includes('Renamed architecture')))

@@ -16,11 +16,12 @@ test('lettering-only brand and restored icons preserve project and documentation
     assert.equal(brand.querySelector('[role="img"]').getAttribute('aria-label'), 'no-te')
     assert.equal(brand.querySelector('img'), null)
     assert.match(brand.querySelector('.no-te-wordmark').style.getPropertyValue('--wordmark-image'), /no-te-wordmark\.svg/)
-    for (const [label, icon] of [['Dashboard', 'house'], ['Projects', 'layers'], ['Documentation', 'book-open']]) {
+    for (const [label, icon] of [['Dashboard', 'house'], ['Projects', 'layers']]) {
       const button = ui.byText(label, sidebar)
       assert.ok(button.querySelector(`svg.lucide-${icon}`))
       assert.equal(button.querySelector('img'), null)
     }
+    assert.equal([...sidebar.querySelectorAll('.primary-nav button')].some(button => button.textContent.trim() === 'Documentation'), false)
     await ui.click(ui.byText('Projects', sidebar))
     await ui.waitFor(() => document.querySelector('.project-card'))
     assert.ok(document.querySelector('.project-card-top svg.lucide-layers'))

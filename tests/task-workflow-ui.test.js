@@ -1,3 +1,4 @@
+import { openDocumentation } from './helpers/documentationNavigation.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { uiHarness } from './helpers/uiHarness.js'
@@ -63,7 +64,7 @@ test('archived task details and linked documentation remain editable and searcha
     assert.ok(ui.byText('Restore to To Do', document.querySelector('dialog')))
     assert.match(document.querySelector('.task-linked-notes').textContent, /Shared task guide/)
     await ui.click(ui.byLabel('Close dialog', document.querySelector('dialog')))
-    await ui.click(document.querySelectorAll('.primary-nav button')[2])
+    await openDocumentation(ui)
     await ui.waitFor(() => document.querySelector('.notes-panel'))
     await ui.select(document.querySelector('[aria-label="Filter documentation links"]'), 'task-linked')
     assert.equal(document.querySelectorAll('.note-card').length, 1)

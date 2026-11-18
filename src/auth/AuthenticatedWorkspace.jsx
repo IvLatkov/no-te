@@ -284,6 +284,7 @@ export default function AuthenticatedWorkspace() {
               notesLoading={notesState.loading}
               notesError={notesState.loadError}
               onOpenProjects={() => navigate('projects')}
+              onOpenDocumentation={() => navigate('documentation')}
               onOpenProject={openProject}
               onOpenTask={openDashboardTask}
               onCreateTask={(id) => openModal({ type: 'task', projectId: id })}

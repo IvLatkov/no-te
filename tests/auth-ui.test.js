@@ -1,3 +1,4 @@
+import { openDocumentation } from './helpers/documentationNavigation.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { uiHarness } from './helpers/uiHarness.js'
@@ -136,7 +137,7 @@ test('authentication gates production UI, handles invalid login, restores sessio
     await ui.click(document.querySelectorAll('.primary-nav button')[1])
     assert.match(document.body.textContent, /Local-only browser content remains quarantined/)
     assert.doesNotMatch(document.body.textContent, /Quarantined/)
-    await ui.click(document.querySelectorAll('.primary-nav button')[2])
+    await openDocumentation(ui)
     await ui.waitFor(() => document.querySelector('.notes-panel'))
     assert.equal(document.querySelector('.note-prose'), null)
     await ui.mount()

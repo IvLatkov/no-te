@@ -13,6 +13,7 @@ export default function DashboardProjectPanels({
   onOpenTask,
   onCreateTask,
   onOpenNote,
+  onOpenDocumentation,
   onRestoreTask,
   onDeleteTask,
   readOnly,
@@ -76,10 +77,17 @@ export default function DashboardProjectPanels({
           )
         })}
         <section className="dashboard-panel dashboard-notes" aria-labelledby="dashboard-documentation">
-          <h3 id="dashboard-documentation">
-            <BookOpen size={15} aria-hidden="true" /> Documentation
-            {!notesLoading && !notesError && <span className="task-count">{projectNotes.length}</span>}
-          </h3>
+          <div className="dashboard-panel-heading">
+            <h3 id="dashboard-documentation">
+              <BookOpen size={15} aria-hidden="true" /> Documentation
+              {!notesLoading && !notesError && <span className="task-count">{projectNotes.length}</span>}
+            </h3>
+            {onOpenDocumentation && (
+              <button type="button" className="text-action all-documentation-action" onClick={onOpenDocumentation}>
+                All documentation
+              </button>
+            )}
+          </div>
           <label className="documentation-link-filter">
             <span className="visually-hidden">Filter dashboard documentation</span>
             <select aria-label="Filter dashboard documentation" value={documentationFilter} onChange={(event) => setDocumentationFilter(event.target.value)}>

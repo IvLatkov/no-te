@@ -1,3 +1,4 @@
+import { openDocumentation } from './helpers/documentationNavigation.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { uiHarness } from './helpers/uiHarness.js'
@@ -11,7 +12,7 @@ import { USER_DATA_KEYS } from '../src/data/storageSafety.js'
 const legacy = () => USER_DATA_KEYS.map((key) => localStorage.getItem(key))
 const noDialogs = () => !document.querySelector('dialog')
 async function documentation(ui) {
-  await ui.click(document.querySelectorAll('.primary-nav button')[2])
+  await openDocumentation(ui)
   await ui.waitFor(() => document.querySelector('.notes-panel'))
 }
 async function newNote(ui, title) {
