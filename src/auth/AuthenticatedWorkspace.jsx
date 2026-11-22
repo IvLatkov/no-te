@@ -289,6 +289,7 @@ export default function AuthenticatedWorkspace() {
               onOpenTask={openDashboardTask}
               onCreateTask={(id) => openModal({ type: 'task', projectId: id })}
               onOpenNote={openDashboardNote}
+              onMoveTask={(id, taskId, status) => run(() => store.moveTask(id, taskId, status))}
               onRestoreTask={(id, taskId) => run(() => store.moveTask(id, taskId, 'todo'))}
               onDeleteTask={(id, task) => openModal({ type: 'deleteTask', projectId: id, task })}
               readOnly={readOnly}

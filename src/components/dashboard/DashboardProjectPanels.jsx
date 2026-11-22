@@ -14,6 +14,7 @@ export default function DashboardProjectPanels({
   onCreateTask,
   onOpenNote,
   onOpenDocumentation,
+  onMoveTask,
   onRestoreTask,
   onDeleteTask,
   readOnly,
@@ -21,6 +22,14 @@ export default function DashboardProjectPanels({
 }) {
   const [archiveOpen, setArchiveOpen] = useState(false)
   const [documentationFilter, setDocumentationFilter] = useState('all')
+  const [draggedTask, setDraggedTask] = useState(null)
+  const canMove = !readOnly && Boolean(onMoveTask)
+
+  function canDrop(status) {
+    return canMove && draggedTask?.projectId === project.id &&
+      activeTasks(project.tasks).some(task => task.id === draggedTask.taskId && task.status !== status)
+  }
+
   const linkedNoteIds = new Set(project.tasks.flatMap((task) => task.linkedNoteIds || []))
   const projectNotes = filterDocumentation(notes.filter((note) => note.projectId === project.id || linkedNoteIds.has(note.id)), projects, documentationFilter)
   return (
@@ -38,7 +47,22 @@ export default function DashboardProjectPanels({
         {[{ id: 'todo', title: 'To Do' }, { id: 'done', title: 'Done' }].map((column) => {
           const tasks = activeTasks(project.tasks).filter((task) => task.status === column.id)
           return (
-            <section className="dashboard-panel" key={column.id} aria-labelledby={`dashboard-${column.id}`}>
+            <section
+              className="dashboard-panel"
+              key={column.id}
+              aria-labelledby={`dashboard-${column.id}`}
+              onDragOver={(event) => {
+                if (!canDrop(column.id)) return
+                event.preventDefault()
+                event.dataTransfer.dropEffect = 'move'
+              }}
+              onDrop={(event) => {
+                if (!canDrop(column.id)) return
+                event.preventDefault()
+                setDraggedTask(null)
+                onMoveTask(project.id, draggedTask.taskId, column.id)
+              }}
+            >
               <div className="dashboard-panel-heading">
                 <h3 id={`dashboard-${column.id}`}>
                   <span className={`status-dot ${column.id}`} aria-hidden="true" />
@@ -54,7 +78,23 @@ export default function DashboardProjectPanels({
               <ul className="dashboard-panel-list">
                 {tasks.map((task) => (
                   <li key={task.id} className={`dashboard-task-item${column.id === 'done' ? ' has-delete' : ''}`}>
-                    <button type="button" className="dashboard-item" onClick={() => onOpenTask(project.id, task.id)} aria-label={`Open task ${task.title}`}>
+                    <button
+                      type="button"
+                      className="dashboard-item"
+                      draggable={canMove}
+                      onDragStart={(event) => {
+                        if (!canMove) {
+                          event.preventDefault()
+                          return
+                        }
+                        event.dataTransfer.effectAllowed = 'move'
+                        event.dataTransfer.setData('application/x-no-te-task', task.id)
+                        setDraggedTask({ projectId: project.id, taskId: task.id })
+                      }}
+                      onDragEnd={() => setDraggedTask(null)}
+                      onClick={() => onOpenTask(project.id, task.id)}
+                      aria-label={`Open task ${task.title}`}
+                    >
                       <span>{task.title}</span>
                       {task.description && <small>{task.description}</small>}
                       {task.status === 'done' && <small className="archive-countdown">{archiveLabel(task)}</small>}

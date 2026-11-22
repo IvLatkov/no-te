@@ -20,6 +20,7 @@ export default function Dashboard({
   onOpenTask,
   onCreateTask,
   onOpenNote,
+  onMoveTask,
   onRestoreTask,
   onDeleteTask,
   readOnly,
@@ -146,6 +147,7 @@ export default function Dashboard({
           onCreateTask={onCreateTask}
           onOpenNote={onOpenNote}
           onOpenDocumentation={onOpenDocumentation}
+          onMoveTask={onMoveTask}
           onRestoreTask={onRestoreTask}
           onDeleteTask={onDeleteTask}
           readOnly={readOnly}
