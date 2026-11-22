@@ -89,6 +89,16 @@ export default function DashboardProjectPanels({
                         }
                         event.dataTransfer.effectAllowed = 'move'
                         event.dataTransfer.setData('application/x-no-te-task', task.id)
+                        const card = event.currentTarget
+                        const preview = card.cloneNode(true)
+                        const width = card.getBoundingClientRect().width
+                        preview.style.cssText = `position: fixed; top: 0; left: 0; z-index: 9999;
+                          pointer-events: none; width: ${width}px; background: #080910;
+                          color: #fff; border: 2px solid #b994ff; opacity: 1;`
+                        preview.setAttribute('aria-hidden', 'true')
+                        document.body.append(preview)
+                        event.dataTransfer.setDragImage(preview, 16, 16)
+                        requestAnimationFrame(() => preview.remove())
                         setDraggedTask({ projectId: project.id, taskId: task.id })
                       }}
                       onDragEnd={() => setDraggedTask(null)}
