@@ -5,9 +5,10 @@ import { appShortcuts } from '../src/components/dashboard/appShortcuts.js'
 import { uiHarness } from './helpers/uiHarness.js'
 
 test('Apps uses local official artwork and fixed website and desktop destinations', async () => {
-  assert.deepEqual(appShortcuts.map((app) => app.id), ['vscode', 'chatgpt', 'figma', 'cloudflare', 'github', 'supabase'])
+  assert.deepEqual(appShortcuts.map((app) => app.id), ['vscode', 'chatgpt', 'perplexity', 'figma', 'cloudflare', 'github', 'supabase'])
   const destinations = {
     vscode: 'vscode://', chatgpt: 'https://chatgpt.com/',
+    perplexity: 'https://www.perplexity.ai/',
     figma: 'https://www.figma.com/design/9JeP5Ri3Y8dQbMyrJ1nf08?node-id=4-2',
     cloudflare: 'https://dash.cloudflare.com/', github: 'https://github.com/IvLatkov',
     supabase: 'https://supabase.com/dashboard',
@@ -38,7 +39,7 @@ test('dashboard shows Apps without a welcome, protects new tabs and exposes hone
     assert.equal(toggle.getAttribute('aria-expanded'), 'true')
     assert.equal(shortcuts.hidden, false)
     const tiles = [...document.querySelectorAll('.app-shortcut')]
-    assert.equal(tiles.length, 6)
+    assert.equal(tiles.length, 7)
     for (const tile of tiles) {
       assert.ok(tile.getAttribute('aria-label'))
       assert.ok(tile.title)
@@ -54,8 +55,15 @@ test('dashboard shows Apps without a welcome, protects new tabs and exposes hone
       assert.equal(link.rel, 'noopener noreferrer')
       assert.equal(new URL(link.href).protocol, 'https:')
     }
-    assert.equal(document.querySelectorAll('[target="_blank"]').length, 5)
+    assert.equal(document.querySelectorAll('[target="_blank"]').length, 6)
     assert.doesNotMatch(document.querySelector('.dashboard').textContent, /Godot|Codex|Set up/)
+    const perplexity = document.querySelector('[aria-label="Open Perplexity in a new tab"]')
+    assert.ok(perplexity)
+    assert.equal(perplexity.href, 'https://www.perplexity.ai/')
+    assert.equal(perplexity.title, 'Perplexity')
+    assert.equal(perplexity.target, '_blank')
+    assert.equal(perplexity.rel, 'noopener noreferrer')
+    assert.equal(perplexity.querySelector('img').getAttribute('src'), '/apps/perplexity.svg')
     const chatgpt = document.querySelector('[aria-label="Open ChatGPT in a new tab"]')
     assert.equal(chatgpt.href, 'https://chatgpt.com/')
     assert.equal(chatgpt.title, 'ChatGPT')
